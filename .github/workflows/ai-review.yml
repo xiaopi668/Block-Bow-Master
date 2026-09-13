@@ -59,7 +59,7 @@ jobs:
           last = ''
           for attempt in range(4):
             try:
-              req = urllib.request.Request('https://game.xiaopi.ink/api/ai-proxy', data=json.dumps(payload).encode(), headers={
+              req = urllib.request.Request('https://bow-master.ghr16555.workers.dev/api/ai-proxy', data=json.dumps(payload).encode(), headers={
                 'Content-Type': 'application/json',
                 'X-Internal-Token': os.environ['AI_PROXY_TOKEN']
               })
