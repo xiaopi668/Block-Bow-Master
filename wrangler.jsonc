@@ -34,7 +34,7 @@
   ],
   "vars": {
     "S3_ENDPOINT": "cn-nb2.rains3.com",
-    "AI_BASE_URL": "https://opencode.ai/zen/go/v1",
+    "AI_BASE_URL": "https://vpn.xiaopi.ink/ai/zen/go/v1",
     "AI_MODEL": "glm-5.3-flash",
     "S3_BUCKET": "message",
     "DATA_URL": "https://vpn.xiaopi.ink/data"

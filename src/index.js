@@ -101,6 +101,7 @@ async function apiBody(request, env, url) {
         const resp = await fetch(base + '/chat/completions', { method: 'POST', headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + (env.AI_API_KEY || ''),
+          'X-Data-Token': (env.DATA_TOKEN || ''),   // 数据服务/AI 中继鉴权
           'x-opencode-session': 'bow-master-' + Math.random().toString(36).slice(2, 10),
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
           'Accept': 'application/json'

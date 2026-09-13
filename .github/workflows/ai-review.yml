@@ -59,18 +59,23 @@ jobs:
           last = ''
           for attempt in range(4):
             try:
-              req = urllib.request.Request('https://game.xiaopi.ink/api/ai-proxy', data=json.dumps(payload).encode(), headers={
+              req = urllib.request.Request('https://vpn.xiaopi.ink/ai/zen/go/v1/chat/completions', data=json.dumps(payload).encode(), headers={
                 'Content-Type': 'application/json',
-                'X-Internal-Token': os.environ['AI_PROXY_TOKEN']
+                'X-Data-Token': os.environ['AI_PROXY_TOKEN']
               })
               with urllib.request.urlopen(req, timeout=240) as r:
-                  d = json.loads(r.read().decode())
-              review = (d.get('choices') or [{}])[0].get('message', {}).get('content') or ''
-              if review.strip(): break
+                  raw = r.read().decode(errors='ignore')
+              try:
+                  d = json.loads(raw)
+                  review = (d.get('choices') or [{}])[0].get('message', {}).get('content') or ''
+                  if review.strip(): break
+                  last = 'empty-review raw:' + raw[:150]
+              except Exception as pe:
+                  last = 'parse:' + str(pe)[:80] + ' raw:' + raw[:180]
             except urllib.error.HTTPError as e:
-              last = 'HTTP ' + str(e.code) + ' ' + e.read().decode(errors='ignore')[:120]
+              last = 'HTTP ' + str(e.code) + ' ' + e.read().decode(errors='ignore')[:150]
             except Exception as e:
-              last = str(e)[:120]
+              last = str(e)[:150]
             time.sleep(6)
           if review is None:
             review = '> ⚠️ AI 审查调用失败（已重试4次）：' + last

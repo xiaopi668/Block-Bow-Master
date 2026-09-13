@@ -58,3 +58,7 @@ public/index.html 前端（和 v4.0 相同，不用改）
 © 2026 xiaopi668 · **保留所有权利 / All Rights Reserved**
 
 本项目为专有软件，未经作者书面授权不得复制、修改、分发或商用。详见 [LICENSE](LICENSE)。
+
+## 更新记录
+
+- v5.3-CF: 结构优化版（账号存自建数据服务、多人房间、AI 审核 PR 流程）
