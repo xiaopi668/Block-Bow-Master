@@ -59,9 +59,9 @@ jobs:
           last = ''
           for attempt in range(4):
             try:
-              req = urllib.request.Request('https://bow-master.ghr16555.workers.dev/api/ai-proxy', data=json.dumps(payload).encode(), headers={
+              req = urllib.request.Request('https://vpn.xiaopi.ink/ai/zen/go/v1/chat/completions', data=json.dumps(payload).encode(), headers={
                 'Content-Type': 'application/json',
-                'X-Internal-Token': os.environ['AI_PROXY_TOKEN']
+                'X-Data-Token': os.environ['AI_PROXY_TOKEN']
               })
               with urllib.request.urlopen(req, timeout=240) as r:
                   d = json.loads(r.read().decode())
