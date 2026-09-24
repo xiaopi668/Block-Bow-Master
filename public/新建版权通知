@@ -1,0 +1,69 @@
+(function () {
+  'use strict';
+
+  var STORAGE_KEY = 'bow-master-copyright-notice-date-v1';
+  var today = new Date().toISOString().slice(0, 10);
+
+  try {
+    if (localStorage.getItem(STORAGE_KEY) === today) return;
+  } catch (e) {}
+
+  var style = document.createElement('style');
+  style.textContent = [
+    '#copyright-notice{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.78);font-family:"Microsoft YaHei","PingFang SC",sans-serif}',
+    '#copyright-notice .notice-panel{width:min(720px,96vw);max-height:90vh;display:flex;flex-direction:column;background:#17130f;color:#f4eee5;border:3px solid #000;box-shadow:inset 2px 2px 0 rgba(255,255,255,.18),0 10px 40px rgba(0,0,0,.8);border-radius:4px}',
+    '#copyright-notice h2{margin:0;padding:16px 20px 10px;color:#ffd83d;text-align:center;font-size:22px;text-shadow:2px 2px 0 #6b4a00}',
+    '#copyright-notice .notice-body{overflow:auto;padding:4px 22px 14px;font-size:13px;line-height:1.8;white-space:pre-line;user-select:text;-webkit-user-select:text}',
+    '#copyright-notice .notice-body strong{color:#ffe08a}',
+    '#copyright-notice .notice-warning{margin-top:10px;padding:10px 12px;color:#ffcf9a;background:rgba(110,52,20,.35);border:1px solid #86552e;border-radius:3px}',
+    '#copyright-notice .notice-actions{display:flex;gap:10px;justify-content:center;padding:12px 18px 16px;border-top:1px solid #493b2b}',
+    '#copyright-notice button{min-width:130px;padding:10px 16px;cursor:pointer;color:#fff;font:inherit;border:2px solid #000;background:linear-gradient(#8b8b8b,#5c5c5c);box-shadow:inset 2px 2px 0 rgba(255,255,255,.3),inset -2px -2px 0 rgba(0,0,0,.45)}',
+    '#copyright-notice button:hover{filter:brightness(1.2)}',
+    '#copyright-notice #notice-today{background:linear-gradient(#5a9b4a,#35702c)}',
+    '@media(max-width:480px){#copyright-notice{padding:8px}#copyright-notice .notice-panel{max-height:94vh}#copyright-notice h2{font-size:19px}#copyright-notice .notice-body{padding:2px 14px 10px;font-size:12px;line-height:1.7}#copyright-notice .notice-actions{padding:10px;flex-direction:column}#copyright-notice button{width:100%}}'
+  ].join('');
+
+  document.head.appendChild(style);
+
+  var notice = document.createElement('div');
+  notice.id = 'copyright-notice';
+  notice.setAttribute('role', 'dialog');
+  notice.setAttribute('aria-modal', 'true');
+  notice.innerHTML =
+    '<div class="notice-panel">' +
+    '<h2>原创与版权声明</h2>' +
+    '<div class="notice-body">' +
+    '<strong>作品名称：弓箭大师</strong>\n' +
+    '本作品由有梗的123、Carliy、xiaopi等创作者共同创作完成。\n' +
+    '创作完成日期：2026年9月12日　首发平台：群聊　交流群：590060958\n\n' +
+    '依据《中华人民共和国著作权法》，本作品的署名权、修改权、复制权、信息网络传播权等著作权利由相关著作权人依法享有。未经书面同意，不得复制、搬运、改编后伪装原创、商用或进行未注明出处的二次创作，不得去除作者署名。\n\n' +
+    '<strong>程序版权声明</strong>\n' +
+    '本站前端代码及程序逻辑为原创开发，受《中华人民共和国著作权法》《计算机软件保护条例》保护。除正常浏览外，未授权任何源码提取、逆向工程、反编译、反汇编、复制、修改、仿制、二次开发或商用分发。\n\n' +
+    '<div class=\"notice-warning\">发现抄袭或搬运，著作权人保留平台投诉、发函、公证存证、民事诉讼及依法索赔等权利。</div>\n' +
+    '联系人：有梗的123　QQ：3885857418</div>' +
+    '<div class=\"notice-actions\"><button id=\"notice-close\">关闭</button><button id=\"notice-today\">今日关闭</button></div>' +
+    '</div>';
+
+  function closeNotice() {
+    notice.remove();
+    style.remove();
+  }
+
+  function closeToday() {
+    try {
+      localStorage.setItem(STORAGE_KEY, today);
+    } catch (e) {}
+    closeNotice();
+  }
+
+  function mount() {
+    if (!document.body) {
+      return setTimeout(mount, 0);
+    }
+    document.body.appendChild(notice);
+    document.getElementById('notice-close').addEventListener('click', closeNotice);
+    document.getElementById('notice-today').addEventListener('click', closeToday);
+  }
+
+  mount();
+})();
