@@ -84,9 +84,9 @@ const server = http.createServer((req, res) => {
       let a = {};
       try { a = JSON.parse(body || '{}'); } catch (e) {}
       const f = path.join(DATA_DIR, name + '.json');   // name 已含 u: 前缀(AI评审: 修双前缀)
+      if (!fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '账号不存在', score: 0 })); return; }
       let rec = {};
       try { rec = JSON.parse(fs.readFileSync(f, 'utf8') || '{}'); } catch (e) {}
-      if (!fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '账号不存在', score: 0 })); return; }
       const d = a.delta|0;
       if (!Number.isInteger(d) || d < 1 || d > 15) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '数据异常', score: rec.score|0 })); return; }
       const T1 = { x: -2.0, z: -22 }, T2 = { x: 2.0, z: -22 };
@@ -114,9 +114,9 @@ const server = http.createServer((req, res) => {
       try { a = JSON.parse(body || '{}'); } catch (e) {}
       const type = String(a.type || '').slice(0, 12);
       const f = path.join(DATA_DIR, name + '.json');
+      if (!fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '账号不存在', score: 0 })); return; }
       let rec = {};
       try { rec = JSON.parse(fs.readFileSync(f, 'utf8') || '{}'); } catch (e) {}
-      if (!fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '账号不存在', score: 0 })); return; }
       if (!SP_PRICE[type]) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '未知箭种', score: rec.score|0 })); return; }   // 类型白名单+价目表在服务端(AI评审: 不可信客户端价格)
       const count = Math.max(1, Math.min(50, (a.count|0) || 1));
       const cost = SP_PRICE[type] * count;
@@ -142,9 +142,9 @@ const server = http.createServer((req, res) => {
       try { a = JSON.parse(body || '{}'); } catch (e) {}
       const n = Math.max(1, Math.min(10, (a.count|0) || 1));
       const f = path.join(DATA_DIR, name + '.json');
+      if (!fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '账号不存在', arrows: 0 })); return; }
       let rec = {};
       try { rec = JSON.parse(fs.readFileSync(f, 'utf8') || '{}'); } catch (e) {}
-      if (!fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '账号不存在', arrows: 0 })); return; }
       rec.arrows = Math.max(0, (rec.arrows|0) - n);
       try { fs.writeFileSync(f, JSON.stringify(rec)); } catch (e) { res.writeHead(500); res.end('write failed'); return; }
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -165,9 +165,9 @@ const server = http.createServer((req, res) => {
       const type = String(a.type || '').slice(0, 12);
       if (!SP_PRICE[type]) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '未知箭种', left: 0 })); return; }   // 类型白名单(AI评审)
       const f = path.join(DATA_DIR, name + '.json');
+      if (!fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '账号不存在', left: 0 })); return; }
       let rec = {};
       try { rec = JSON.parse(fs.readFileSync(f, 'utf8') || '{}'); } catch (e) {}
-      if (!fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '账号不存在', left: 0 })); return; }
       if (!rec.sp) rec.sp = {};
       if ((rec.sp[type]|0) < 1) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '该箭已用完', left: 0 })); return; }
       rec.sp[type] = (rec.sp[type]|0) - 1;
@@ -189,9 +189,9 @@ const server = http.createServer((req, res) => {
       try { a = JSON.parse(body || '{}'); } catch (e) {}
       const cost = (a.cost|0) || 5000;
       const f = path.join(DATA_DIR, name + '.json');   // name 已含 u: 前缀(AI评审: 修双前缀)
+      if (!fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '账号不存在', score: 0 })); return; }
       let rec = {};
       try { rec = JSON.parse(fs.readFileSync(f, 'utf8') || '{}'); } catch (e) {}
-      if (!fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '账号不存在', score: 0 })); return; }
       if ((rec.score|0) < cost) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '积分不足，还差 ' + (cost - (rec.score|0)) + ' 分', score: rec.score|0 })); return; }
       rec.score = (rec.score|0) - cost;
       rec.anticard = (rec.anticard|0) + 1;
