@@ -1,0 +1,159 @@
+function modeName(m) {
+  const map = {
+    normal: '普通',
+    endless: '无限',
+    precision: '精准',
+    rush30: '狂射'
+  };
+  return map[m] || '普通';
+}
+
+function bindRoomModeUI() {
+  const roomSetup = document.getElementById('room-setup');
+  const roomModes = roomSetup ? roomSetup.querySelectorAll('[data-rmode]') : [];
+  const roomSetupOk = document.getElementById('room-setup-ok');
+  const roomSetupCancel = document.getElementById('room-setup-cancel');
+  const roomPass = document.getElementById('room-pass');
+  const roomMax = document.getElementById('room-max');
+
+  // 1) 创建房间弹窗：选择模式
+  if (roomModes.length) {
+    roomModes.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-rmode');
+        roomSetup.dataset.sel = mode;
+        roomModes.forEach(b => {
+          b.style.filter = (b === btn) ? 'brightness(1.15)' : '';
+          b.style.boxShadow = (b === btn) ? '0 0 0 2px #7ee37e inset' : '';
+        });
+      });
+    });
+
+    // 默认选中普通
+    const defaultBtn = roomSetup.querySelector('[data-rmode="normal"]');
+    if (defaultBtn) defaultBtn.click();
+  }
+
+  // 2) 创建房间确认
+  if (roomSetupOk) {
+    roomSetupOk.onclick = () => {
+      const mode = roomSetup.dataset.sel || 'normal';
+      const pass = roomPass ? roomPass.value.trim() : '';
+      const max = roomMax ? Number(roomMax.value) || 4 : 4;
+
+      if (!NET || !NET.ws || NET.ws.readyState !== WebSocket.OPEN) {
+        toast('连接未就绪，无法创建房间', false);
+        return;
+      }
+
+      NET.ws.send(JSON.stringify({
+        t: 'create',
+        mode,
+        pass,
+        max
+      }));
+
+      if (roomSetup) roomSetup.style.display = 'none';
+      toast('正在创建房间：' + modeName(mode), true);
+    };
+  }
+
+  if (roomSetupCancel) {
+    roomSetupCancel.onclick = () => {
+      if (roomSetup) roomSetup.style.display = 'none';
+    };
+  }
+
+  // 3) 多人换模式弹窗
+  const multiModeModal = document.getElementById('multi-mode-modal');
+  const multiModeCancel = document.getElementById('multi-mode-cancel');
+  const multiModeBtns = multiModeModal ? multiModeModal.querySelectorAll('[data-mmode]') : [];
+
+  multiModeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.getAttribute('data-mmode');
+
+      if (!NET || !NET.ws || NET.ws.readyState !== WebSocket.OPEN) {
+        toast('连接未就绪，无法切换模式', false);
+        return;
+      }
+
+      NET.ws.send(JSON.stringify({
+        t: 'set-mode',
+        mode
+      }));
+
+      toast('已切换为 ' + modeName(mode) + '，全房同步生效', true);
+      if (multiModeModal) multiModeModal.style.display = 'none';
+    });
+  });
+
+  if (multiModeCancel) {
+    multiModeCancel.onclick = () => {
+      if (multiModeModal) multiModeModal.style.display = 'none';
+    };
+  }
+
+  // 4) 暂停菜单中的“换房间模式”按钮
+  const btnPauseMode = document.getElementById('btn-pause-mode');
+  if (btnPauseMode) {
+    btnPauseMode.onclick = () => {
+      sfx('ui');
+
+      if (!(NET && NET.isHost && G && G.mode === 'multi')) {
+        toast('只有房主能更换房间模式', false);
+        return;
+      }
+
+      const pauseOverlay = document.getElementById('pause-overlay');
+      if (pauseOverlay) pauseOverlay.classList.remove('show');
+
+      if (multiModeModal) multiModeModal.style.display = 'flex';
+    };
+  }
+
+  // 5) 进入“创建房间”时打开设置弹窗
+  const btnCreate = document.getElementById('btn-create');
+  if (btnCreate) {
+    btnCreate.onclick = () => {
+      sfx('ui');
+      if (roomSetup) {
+        roomSetup.style.display = 'flex';
+        roomPass.value = '';
+        roomMax.value = '4';
+        const defaultBtn = roomSetup.querySelector('[data-rmode="normal"]');
+        if (defaultBtn) defaultBtn.click();
+      }
+    };
+  }
+}
+
+// 6) 监听服务端模式同步消息
+function bindRoomModeMessage() {
+  if (!window.NET || !window.NET._onMessage) {
+    // 如果你项目里已有消息分发入口，把下面这段放进原来的 onmessage 处理器
+    return;
+  }
+
+  const old = window.NET._onMessage;
+  window.NET._onMessage = function (msg) {
+    old && old.call(this, msg);
+
+    if (!msg || !msg.t) return;
+
+    if (msg.t === 'mode') {
+      if (G) G.roomMode = msg.mode || 'normal';
+      toast('房间模式已切换为：' + modeName(msg.mode), true);
+    }
+
+    if (msg.t === 'round-start') {
+      // 你的狂射模式开局同步逻辑
+    }
+  };
+}
+
+// 执行
+window.addEventListener('DOMContentLoaded', () => {
+  bindRoomModeUI();
+  bindRoomModeMessage();
+});
