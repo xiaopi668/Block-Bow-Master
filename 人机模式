@@ -1,0 +1,139 @@
+(function () {
+  'use strict';
+
+  var AI_CFG = {
+    easy: {
+      label: '简单',
+      name: '🤖 菜鸟人机',
+      interval: [2200, 4000],
+      errA: 0.12,
+      errV: 0.22,
+      draw: [0.6, 1.0],
+      lead: 0
+    },
+    hard: {
+      label: '困难',
+      name: '🎯 神射手人机',
+      interval: [1000, 1800],
+      errA: 0.014,
+      errV: 0.03,
+      draw: [0.95, 1.0],
+      lead: 1
+    }
+  };
+
+  var GRAVITY = 11;
+  var V_MIN = 24;
+  var V_K = 40;
+  var TARGET_LIMIT = 38;
+  var BOT_POS = { x: 0, y: 1.62, z: 8 };
+  var DEBUG = false;
+
+  var G = null, THREE = null, camera = null;
+  var _level = null;
+  var _score = 0;
+  var _active = false;
+  var _timer = null;
+  var _onHitOrig = null;
+
+  function aiLevel() {
+    return window.__AI_LEVEL || 'easy';
+  }
+
+  function cfg() {
+    return AI_CFG[_level] || AI_CFG.easy;
+  }
+
+  function gameOn() {
+    return _active && G && G.active && G.running;
+  }
+
+  function clearTimer() {
+    if (_timer) {
+      clearTimeout(_timer);
+      _timer = null;
+    }
+  }
+
+  function solveAim(origin, target, power) {
+    var v = V_MIN + power * V_K;
+    var dx = target.x - origin.x;
+    var dz = target.z - origin.z;
+    var d = Math.hypot(dx, dz);
+    var dy = target.y - origin.y;
+    var under = v * v * v * v - GRAVITY * (GRAVITY * d * d + 2 * dy * v * v);
+    if (under < 0) return null;
+    var th = Math.atan((v * v - Math.sqrt(under)) / (GRAVITY * d));
+    var yaw = Math.atan2(-dx, -dz);
+    return {
+      yaw: yaw,
+      pitch: th,
+      flight: d / (v * Math.cos(th))
+    };
+  }
+
+  function clamp(v, a, b) {
+    return Math.max(a, Math.min(b, v));
+  }
+
+  function spawnFoeArrow(c, tg) {
+    if (!window.THREE || !window.camera) return;
+    if (!G || !G.targets || !G.targets[0]) return;
+
+    var origin = new THREE.Vector3(BOT_POS.x, BOT_POS.y, BOT_POS.z);
+    var target = { x: tg.x, y: tg.y, z: tg.z };
+    var aim = solveAim(origin, target, 1);
+    if (!aim) return;
+
+    var leadFactor = c.lead ? 1 : 0.12;
+    var vt = (typeof tg.dx === 'number' ? tg.dx : 1) * (G.mvSpeed || 1.4);
+    var p2 = clamp(tg.x + vt * aim.flight * leadFactor, -TARGET_LIMIT, TARGET_LIMIT);
+    var aim2 = solveAim(origin, { x: p2, y: tg.y, z: tg.z }, 1);
+    if (aim2) aim = aim2;
+
+    var yaw = aim.yaw + (Math.random() * 2 - 1) * c.errA;
+    var pitch = clamp(clamp(aim.pitch, -1.35, 1.35) + (Math.random() * 2 - 1) * c.errA * 0.7, -1.35, 1.35);
+    var v = V_MIN + V_K + (Math.random() * 2 - 1) * c.errV * V_K;
+
+    var dir = new THREE.Vector3(
+      -Math.sin(yaw) * Math.cos(pitch),
+      Math.sin(pitch),
+      -Math.cos(yaw) * Math.cos(pitch)
+    );
+
+    try { sfx('shoot'); } catch (e) { if (DEBUG) console.warn(e); }
+    spawnArrow(origin, dir.multiplyScalar(v), 'foe', c.name, 'normal', false);
+  }
+
+  function aiTick() {
+    clearTimer();
+    if (!gameOn()) return;
+
+    try {
+      if (isPaused()) {
+        _timer = setTimeout(aiTick, 400);
+        return;
+      }
+    } catch (e) { if (DEBUG) console.warn(e); }
+
+    var c = cfg();
+    var tg = G.targets && G.targets[0];
+    if (tg) spawnFoeArrow(c, tg);
+
+    _timer = setTimeout(aiTick, c.interval[0] + Math.random() * (c.interval[1] - c.interval[0]));
+  }
+
+  function hookOnHit() {
+    if (_onHitOrig) return;
+    _onHitOrig = window.onHit || function () {};
+
+    window.onHit = function (arrow, target, r) {
+      if (_active && arrow && arrow.owner === 'foe') {
+        var ring = ringFromR(r, target.radius);
+        _score += ring;
+        try { burst(arrow.mesh.position, 0x66ccff); } catch (e) {}
+        try { sfx('hit'); } catch (e) {}
+        try { banner('🤖 ' + cfg().name + ' 命中', ring + ' 环' + (ring === 10 ? ' · 正中靶心！' : '')); } catch (e) {}
+        renderAiHud();
+        arrow.stuck = true;_*
+
