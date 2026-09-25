@@ -1,0 +1,84 @@
+(public/ai-mode.js) — GLM */
+(function () {
+  'use strict';
+
+  var AI_CFG = {easy: { label: '简单', name: '🤖 菜鸟人机', interval: [2200, 4000], errA: 0.12, errV: 0.22, draw: [0.6, 1.0], lead: 0 },hard: { label: '困难', name: '🎯 神射手人机', interval: [1000, 1800], errA: 0.014, errV: 0.03, draw: [0.95, 1.0], lead: 1 }
+  };
+
+  /* 与游戏对齐的弹道常量(见源码 releaseArrow / 箭矢更新) */var GRAVITY = 11;
+  var V_MIN = 24;
+  var V_K = 40;
+  var TARGET_LIMIT = 38;      /* 无限模式靶横移边界 */
+  var BOT_POS = { x: 0, y: 1.62, z: 8 };   /* 人机固定站位 = 玩家出生位 */
+  var DEBUG = false;var DEPS = ['spawnArrow', 'sfx', 'burst', 'banner', 'ringFromR', 'isPaused', 'NOW', 'startGame', 'exitGame'];
+
+  var G = null, THREE = null, camera = null;var _level = null, _score = 0, _active = false, _timer = null, _onHitOrig = null;
+
+  function depsOK() {
+    try {
+      G = window.G; THREE = window.THREE; camera = window.camera;if (!THREE || !camera) return false;
+      for (var i = 0; i < DEPS.length; i++) {
+        if (typeof window[DEPS[i]] !== 'function') { if (DEBUG) console.warn('[AI] 缺依赖:', DEPS[i]); return false; }
+      }
+      return true;
+    } catch (e) { return false; }
+  }function cfg() { return AI_CFG[_level] || AI_CFG.easy; }
+  function gameOn() { return _active && G && G.active && G.running; }function clearTimer() { if (_timer) { clearTimeout(_timer); _timer = null; } }
+
+  /* 弹道: 求俯仰/偏航; 返回含飞行时间 */
+  function solveAim(target, power) {
+    var v = V_MIN + power * V_K;var dx = target.x - BOT_POS.x, dz = target.z - BOT_POS.z;
+    var d = Math.hypot(dx, dz), dy = target.y - BOT_POS.y;var under = v * v * v * v - GRAVITY * (GRAVITY * d * d + 2 * dy * v * v);
+    if (under < 0) return null;var th = Math.atan((v * v - Math.sqrt(under)) / (GRAVITY * d));
+    return { yaw: Math.atan2(-dx, -dz), pitch: th, flight: d / (v * Math.cos(th)) };
+  }
+
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }function botShoot() {
+    var c = cfg(), tg = G.targets[0];
+    if (!tg) return;
+    var aim = solveAim(tg, 1);
+    if (!aim) { if (DEBUG) console.warn('[AI] 弹道无解, 跳过'); return; }/* 预判: 用首次解算的飞行时间; 困难吃满, 简单只吃12% */
+    var vt = (typeof tg.dx === 'number' ? tg.dx : 1) * (G.mvSpeed || 1.4);
+    var frac = c.lead ? 1 : 0.12;var p2 = clamp(tg.x + vt * aim.flight * frac, -TARGET_LIMIT, TARGET_LIMIT);
+    var aim2 = solveAim({ x: p2, y: tg.y, z: tg.z }, 1);
+    if (aim2) aim = aim2;var yaw = aim.yaw + (Math.random() * 2 - 1) * c.errA;
+    var pitch = clamp(clamp(aim.pitch, -1.35, 1.35) + (Math.random() * 2 - 1) * c.errA * 0.7, -1.35, 1.35);
+    var v = V_MIN + V_K + (Math.random() * 2 - 1) * c.errV * V_K;var dir = new THREE.Vector3(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));var origin = new THREE.Vector3(BOT_POS.x, BOT_POS.y, BOT_POS.z);
+    try { sfx('shoot'); } catch (e) { if (DEBUG) console.warn(e); }
+    spawnArrow(origin, dir.multiplyScalar(v), 'foe', c.name, 'normal', false);
+  }
+
+  function tick() {
+    clearTimer();if (!gameOn()) return;
+    try {
+      if (isPaused()) { _timer = setTimeout(tick, 400); return; }
+    } catch (e) { if (DEBUG) console.warn(e); }botShoot();
+    var c = cfg();
+    _timer = setTimeout(tick, c.interval[0] + Math.random() * (c.interval[1] - c.interval[0]));
+  }
+
+  /* ---- 记分: 包onHit, 带依赖守卫 ---- */function hookOnHit() {
+    if (_onHitOrig) return;
+    _onHitOrig = window.onHit;
+    window.onHit = function (arrow, target, r) {
+      if (_active && arrow && arrow.owner === 'foe') {var ring = ringFromR(r, target.radius);
+        _score += ring;
+        burst(arrow.mesh.position, 0x66ccff);try { sfx('hit'); } catch (e) { if (DEBUG) console.warn(e); }
+        banner('🤖 ' + cfg().name + ' 命中', ring + ' 环' + (ring === 10 ? ' · 正中靶心！' : ''));
+        renderHud();arrow.stuck = true; arrow.stickT = NOW(); target.shakeT = NOW();
+        return;
+      }
+      return _onHitOrig.apply(this, arguments);
+    };
+  }/* ---- HUD(纯DOM构建) ---- */
+  function renderHud() {
+    var box = document.getElementById('ai-score-box');
+    if (!box) return;
+    box.textContent = '';var lab = AI_CFG[_level] ? AI_CFG[_level].label : '';
+    var l1 = document.createTextNode('🤖 人机（' + lab + '）');
+    var span = document.createElement('span');span.style.color = '#8fd8ff';
+    var b = document.createElement('b');
+    b.textContent = String(_score);
+    span.appendChild(document.createTextNode('得分：'));span.appendChild(b);
+    box.appendChild(l1);
+    box.appendChild(document.create
