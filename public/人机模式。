@@ -1,0 +1,113 @@
+(function(){
+'use strict';
+
+var AI_CFG = {
+  easy: { name:'🤖 菜鸟人机', interval:[2200,4000], errA:0.12, errV:0.22, draw:[0.6,1.0], lead【2/40】:0 },
+  hard: { name:'🎯 神射手人机', interval:[1000,1800], errA:0.014, errV:0.03, draw:[0.95,1.0], lead:1 }
+};
+
+function aiLevel(){ return window.__AI_LEVEL; }
+function aiCfg(){ return AI_CFG[aiL【3/40】evel()] || AI_CFG.easy; }
+
+/* 弹道解算: 求俯仰角, 重力11 */
+function solveAim(origin, target, power){
+  var v = 24 + power * 40;
+  var g = 11;
+  var dx = target.x - origin.x, dz = target.z - origin.z;【4/40】
+  var d = Math.sqrt(dx*dx + dz*dz);
+  var dy = target.y - origin.y;
+  var under = v*v*v*v - g*(g*d*d + 2*dy*v*v);
+  if(under < 0) return null;
+  var th = Math.atan((v*v - Math.sqrt(under))【5/40】/ (g*d));
+  var yaw = Math.atan2(-dx, -dz); /* -z为前向 */
+  return { yaw: yaw, pitch: th, dist: d, flight: d / (v * Math.cos(th)) };
+}
+
+function spawnFoeArrow(cfg, tg){
+  var d【6/40】irToT = new THREE.Vector3(tg.x - camera.position.x, 0, tg.z - camera.position.z).normalize();
+  var right = new THREE.Vector3().crossVectors(dirToT, new THREE.Vector3(0,1,0)).normalize();【7/40】var origin = camera.position.clone().addScaledVector(right, 2.2); origin.y = 1.62;
+
+  /* 移动靶预判 */
+  var drawSet = cfg.draw;
+  var power = drawSet[0] + Math.random() * (drawSet[1] - drawSet[0【8/40】]);
+  var aim = solveAim(origin, tg, power);
+  if(!aim) return;
+  var vx = (tg.dx || 1) * (G.mvSpeed || 1.4);
+  var aimPt = { x: tg.x, y: tg.y, z: tg.z };
+  if(cfg.lead){
+    aimPt.x = tg.x【9/40】+ vx * aim.flight;
+    if(aimPt.x > 38) aimPt.x = 38; if(aimPt.x < -38) aimPt.x = -38;
+  } else {
+    aimPt.x = tg.x + vx * 0.12; /* 简单: 预判很差 */
+  }
+  aim = solveAim(origin, { x: aimPt.x,【10/40】y: aimPt.y, z: aimPt.z }, power);
+  if(!aim) return;
+
+  var errA = cfg.errA, errV = cfg.errV;
+  var yaw = aim.yaw + (Math.random()*2-1) * errA;
+  var pitch = Math.max(-1.35, Math.min(1.35, a【11/40】im.pitch + (Math.random()*2-1) * errA * 0.7));
+  var v = 24 + power * 40 + (Math.random()*2-1) * errV * 40;
+
+  var dir = new THREE.Vector3(
+    -Math.sin(yaw) * Math.cos(pitch),
+    Math.sin【12/40】(pitch),
+    -Math.cos(yaw) * Math.cos(pitch)
+  );
+  var vel = dir.multiplyScalar(v);
+  try{ sfx('shoot'); }catch(e){}
+  spawnArrow(origin, vel, 'foe', cfg.name, 'normal', false);
+}
+
+functio【13/40】n aiTick(){
+  if(!window.__AI_ACTIVE || !G || !G.active || !G.running){ return; }
+  try{ if(isPaused()){ window.__AI_TIMER = setTimeout(aiTic【14/40】k, 400); return; } }catch(e){}
+  var cfg = aiCfg();
+  var tg = G.targets[0];
+  if(tg){ spawnFoeArrow(cfg, tg); }
+  var it = cfg.interval[0] + Math.random() * (cfg.interval[1] - cfg.interval[【15/40】0]);
+  window.__AI_TIMER = setTimeout(aiTick, it);
+}
+
+/* 记分: 包一层onHit, 人机箭不进玩家计分 */
+if(typeof onHit === 'function' && !window.__onHitOrig){
+  window.__onHitOrig = onHit;
+  window.onHit = fun【16/40】ction(arrow, target, r){
+    if(window.__AI_ACTIVE && arrow.owner === 'foe'){
+      var ring = ringFromR(r, target.radius);
+      window.__AI_SCORE = (window.__AI_SCORE|0) + ring;
+      burs【17/40】t(arrow.mesh.position, 0x66ccff);
+      try{ sfx('hit'); }catch(e){}
+      banner('🤖 ' + aiCfg().name + ' 命中', ring + ' 环' + (ring===10 ? ' · 正中靶心！' : ''));
+      renderAiHud();
+      arrow.【18/40】stuck = true; arrow.stickT = NOW(); target.shakeT = NOW();
+      return;
+    }
+    return window.__onHitOrig.apply(this, arguments);
+  };
+}
+
+/* HUD */
+function renderAiHud(){
+  var box = doc【19/40】ument.getElementById('ai-score-box');
+  if(!box) return;
+  var label = aiLevel() === 'hard' ? '困难' : '简单';
+  box.innerHTML = '🤖 人机（' + label + '）<br><span style="color:#8fd8ff">得分：<b>' + (wi【20/40】ndow.__AI_SCORE|0) + '</b></span>';
+  box.style.display = 'block';
+}
+
+/* 难度弹窗 */
+function openAiDifficultyModal(){
+  var old = document.getElementById('ai-difficulty-modal');
+  if(old) old.r【21/40】emove();
+  var modal = document.createElement('div');
+  modal.id = 'ai-difficulty-modal';
+  modal.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:c【22/40】enter;background:rgba(0,0,0,.72);z-index:9999';
+  var panel = document.createElement('div');
+  panel.className = 'mc-panel';
+  var title = document.createElement('div');
+  title.style.cssTex【23/40】t = 'font-size:18px;font-weight:700;color:#ffd83d;text-shadow:2px 2px 0 #000';
+  title.textContent = '🤖 选择人机难度';
+  var cap = document.createElement('div');
+  cap.className = 'note';
+  cap.te【24/40】xtContent = '简单：人机又慢又不准，随便虐它；困难：人机会预判移动靶，弹无虚发。胆子大就来。';
+  var row = document.createElement('div');
