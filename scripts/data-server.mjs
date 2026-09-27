@@ -121,7 +121,8 @@ const server = http.createServer((req, res) => {
       try { rec = JSON.parse(fs.readFileSync(f, 'utf8') || '{}'); } catch (e) {}
       if (!fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '账号不存在', score: 0 })); return; }
       const d = a.delta|0;
-      if (!Number.isInteger(d) || d < 1 || d > 15) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '数据异常', score: rec.score|0 })); return; }
+      /* 合法上限: 靶心10 + 连击加成5 + 爆裂2 = 17, 故钳到20(原15会误伤满连击+爆裂的正常命中) */
+      if (!Number.isInteger(d) || d < 1 || d > 20) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '数据异常', score: rec.score|0 })); return; }
       const T1 = { x: -2.0, z: -22 }, T2 = { x: 2.0, z: -22 };
       const px = Number(a.x), pz = Number(a.z);
       if (Number.isFinite(px) && Number.isFinite(pz)) {

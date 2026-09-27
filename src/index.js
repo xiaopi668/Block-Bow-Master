@@ -15,6 +15,20 @@ function json(data, code = 200) {
 async function readBody(request) {
   try { return await request.json(); } catch (e) { return {}; }
 }
+/* 进程内限流(isolate 级, 跨 isolate 各自计数): 作为防脚本刷分/撞库/养号的第一道闸 */
+const RL = new Map();
+function rateLimit(key, max, windowMs) {
+  const now = Date.now();
+  const e = RL.get(key);
+  const arr = e ? e.t.filter(function (t) { return now - t < windowMs; }) : [];
+  if (arr.length >= max) { RL.set(key, { w: windowMs, t: arr }); return false; }
+  arr.push(now);
+  RL.set(key, { w: windowMs, t: arr });
+  if (RL.size > 4000) {   // 内存兜底: 清掉已过期的桶
+    for (const [k, v] of RL) { if (!v.t.length || now - v.t[v.t.length - 1] > v.w) RL.delete(k); }
+  }
+  return true;
+}
 async function presenceList(env) {
   try {
     const stub = env.ROOM.get(env.ROOM.idFromName('bow-live5'));
@@ -110,6 +124,7 @@ async function apiBody(request, env, url) {
     const me0 = await userFromToken(env, token);
     let me = me0;
     const path = url.pathname;
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
 
     /* 赛季懒结算: 下沉到数据服务做同步原子读改写(AI评审: 并发下不重复结算/不多扣卡) */
     if (me && (me.seasonIdx|0) !== seasonIdx()) {
@@ -134,7 +149,10 @@ async function apiBody(request, env, url) {
     /* ---- 无需登录的接口 ---- */
     if (path === '/api/ai-proxy' && request.method === 'POST') {
       try {
-        if (request.headers.get('X-Internal-Token') !== (env.AI_PROXY_TOKEN || '')) return json({ error: '无权' }, 403);
+        /* secret 未配置时硬失败: 否则空值头 '' === '' 会直接放行(AI评审/P0) */
+        if (!env.AI_PROXY_TOKEN) return json({ error: '服务未配置(AI_PROXY_TOKEN)' }, 503);
+        if (request.headers.get('X-Internal-Token') !== env.AI_PROXY_TOKEN) return json({ error: '无权' }, 403);
+        if (!rateLimit('ai:' + ip, 30, 60000)) return json({ error: '请求过于频繁，请稍后再试' }, 429);
         const base = (env.AI_BASE_URL || '').replace(/\/+$/, '');
         const payload = { model: body.model || (env.AI_MODEL || 'glm-5.3-flash'), messages: body.messages || [], temperature: (body.temperature === undefined ? 0.1 : body.temperature), max_tokens: body.max_tokens || 4000 };
         const resp = await fetch(base + '/chat/completions', { method: 'POST', headers: {
@@ -160,6 +178,7 @@ async function apiBody(request, env, url) {
 
     /* ---- 认证 ---- */
     if (path === '/api/register' && request.method === 'POST') {
+      if (!rateLimit('rg:' + ip, 5, 600000)) return json({ error: '注册太频繁了，请 10 分钟后再试' }, 429);
       const name = String(body.username || '').trim();
       const pass = String(body.password || '');
       if (!name) return json({ error: '请输入姓名（账号）' }, 400);
@@ -176,9 +195,12 @@ async function apiBody(request, env, url) {
       return json({ token: await issueToken(env, name), user: pubUser(u) });
     }
     if (path === '/api/login' && request.method === 'POST') {
+      if (!rateLimit('lgi:' + ip, 10, 300000)) return json({ error: '登录太频繁了，请 5 分钟后再试' }, 429);
       try {
         const name = String(body.username || '').trim();
         const pass = String(body.password || '');
+        /* 按账号限速: 阻止单账号被定向撞库(与 IP 限速叠加) */
+        if (name && !rateLimit('lgn:' + name.toLowerCase(), 8, 300000)) return json({ error: '该账号尝试过多，请 5 分钟后再试' }, 429);
         let u = await readUser(env, name);
         if (!u) {
           /* KV 副本可能滞后: 回源 DO 查询 */
@@ -215,6 +237,8 @@ async function apiBody(request, env, url) {
       return json({ user: pubUser({ ...me, _name: me.name, _online: online }) });
     }
     if (path === '/api/score' && request.method === 'POST') {
+      /* 记分限流: 单账号 10 秒内最多 60 次上报(正常命中远低于此), 挡住脚本刷分(P0) */
+      if (!rateLimit('sc:' + me.name, 60, 10000)) return json({ error: '得分上报太频繁，请稍后再试', score: 0 }, 429);
       /* 记分下沉到数据服务原子操作(AI评审): 服务端校验反作弊并同步读改写 */
       let d2 = null;
       try { const r2 = await dsFetch(env, '/score/' + encodeURIComponent('u:' + me.name), 'POST', body); d2 = await r2.json(); } catch (e) { d2 = null; }   // 非JSON响应兜底(AI评审)
@@ -540,17 +564,22 @@ async function apiBody(request, env, url) {
       if (path === '/api/admin/score') {
         const d2 = Math.max(-500, Math.min(500, body.delta | 0));
         if (body.zero) {
-          cursor = undefined; var listed = [];
-          do {
-            const page = await env.BOW_KV.list({ prefix: 'u:', cursor });
-            page.keys.forEach(function(k){ listed.push(k.name.slice(2)); });
-            cursor = page.list_complete ? undefined : page.cursor;
-          } while (cursor);
-          for (var zi = 0; zi < listed.length; zi++) {
-            var zu = await readUser(env, listed[zi]);
-            if (zu && !isDev(zu)) { zu.score = 0; await writeUser(env, listed[zi], zu); }
+          /* 全体清零: 主存(数据服务 __index)优先, PATCH 只改 score 字段; 数据服务不可用时回退 KV 读改写。
+             (修复 P0: 原实现 cursor 未声明, ES Module 严格模式直接 ReferenceError → 该接口必定 500;
+              且原实现只遍历 KV 的 u: 键, 早已迁到数据服务的账号一个都清不到) */
+          const allZero = await listAllUsers(env);
+          const namesZero = Object.keys(allZero);
+          var zeroed = 0;
+          for (var zi = 0; zi < namesZero.length; zi++) {
+            var zn = namesZero[zi];
+            if (isDev(allZero[zn])) continue;   // 开发者账号保持不动(与原逻辑一致)
+            var zok = false;
+            try { zok = await dsPatch(env, zn, { score: 0 }); } catch (e) { zok = false; }
+            if (zok) { zeroed++; continue; }
+            var zu = await readUser(env, zn);
+            if (zu && !isDev(zu)) { zu.score = 0; await writeUser(env, zn, zu); zeroed++; }
           }
-          return json({ ok: true });
+          return json({ ok: true, zeroed: zeroed, total: namesZero.length });
         }
         if (body.all) {
           /* 全体加分: 用 __index 的名字+当前分, PATCH 只改 score 字段(不读不写整记录) */
