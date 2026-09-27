@@ -666,7 +666,14 @@ function addScore(name, d){
   api('/api/score', { method:'POST', body:{ delta: d, x: sx, z: sz } }).then(r=>{
     if (AUTH.user){ AUTH.user.score = r.score; if (USER_CACHE[AUTH.user.username]) USER_CACHE[AUTH.user.username].score = r.score; }
     if (curScreen === 'screen-lobby' && getSession() === name){ $('lob-score').textContent = r.score; refreshRankBadge(); }
-  }).catch(e=>{ if(e && e.message && String(e.message).indexOf('行为异常')>=0) toast('⚠ ' + e.message, false); });
+  }).catch(e=>{
+    const m = (e && e.message) || '';
+    if(m.indexOf('行为异常')>=0) toast('⚠ ' + m, false);
+    else if(m.indexOf('频繁')>=0){   // 被限流: 明确提示这分没记上, 避免本地乐观加分与服务器静默不一致
+      toast('⚠ ' + m, false);
+      api('/api/me', { skipAuth:true }).then(function(dd){ if(dd && dd.user && AUTH.user){ AUTH.user.score = dd.user.score; if(USER_CACHE[dd.user.username]) USER_CACHE[dd.user.username].score = dd.user.score; if(curScreen==='screen-lobby' && $('lob-score')) $('lob-score').textContent = dd.user.score; } }).catch(function(){});
+    }
+  });
 }
 function srvOnlineNames(){ return Array.from(ONLINE_SET); }
 

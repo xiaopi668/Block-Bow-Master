@@ -120,8 +120,9 @@ const server = http.createServer((req, res) => {
       let rec = {};
       try { rec = JSON.parse(fs.readFileSync(f, 'utf8') || '{}'); } catch (e) {}
       if (!fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '账号不存在', score: 0 })); return; }
-      const d = a.delta|0;
-      if (!Number.isInteger(d) || d < 1 || d > 15) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '数据异常', score: rec.score|0 })); return; }
+      const dRaw = Number(a.delta), d = dRaw | 0;
+      /* 合法上限 17 = 靶心10 + 连击加成5 + 爆裂2(原15会误伤满加成命中); 先判整数再|0, 防 20.9 被截断放行 */
+      if (!Number.isFinite(dRaw) || dRaw !== d || d < 1 || d > 17) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '数据异常', score: rec.score|0 })); return; }
       const T1 = { x: -2.0, z: -22 }, T2 = { x: 2.0, z: -22 };
       const px = Number(a.x), pz = Number(a.z);
       if (Number.isFinite(px) && Number.isFinite(pz)) {
@@ -231,6 +232,38 @@ const server = http.createServer((req, res) => {
       try { fs.writeFileSync(f, JSON.stringify(rec)); } catch (e) { res.writeHead(500); res.end('write failed'); return; }
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: 1, score: rec.score|0, anticard: rec.anticard|0 }));
+    });
+    return;
+  }
+  /* 全体清零 / 全体加分(原子): 在本机一次性遍历所有账号, 跳过开发者。
+     下沉到这里是为了避免 Worker 逐用户发 N 个 PATCH —— 免费版单请求 50 个子请求上限,
+     账号一多就会中途 500; 也顺带解决 KV 兜底占位记录 isDev 判不出来的问题 */
+  if (req.method === 'POST' && (rawKey === 'scorezero' || rawKey === 'scoreadj')) {
+    let body = '';
+    req.on('data', (c) => { body += c; if (body.length > 10000) req.destroy(); });
+    req.on('end', () => {
+      let a = {};
+      try { a = JSON.parse(body || '{}'); } catch (e) {}
+      const isZero = rawKey === 'scorezero';
+      const delta = isZero ? 0 : Math.max(-500, Math.min(500, a.delta|0));
+      let files = [];
+      try { files = fs.readdirSync(DATA_DIR); } catch (e) {}
+      let changed = 0, skippedDev = 0, total = 0;
+      for (const f of files) {
+        if (!f.startsWith('u:') || !f.endsWith('.json')) continue;
+        total++;
+        const fp = path.join(DATA_DIR, f);
+        let rec = {};
+        try { rec = JSON.parse(fs.readFileSync(fp, 'utf8') || '{}'); } catch (e) { continue; }
+        if (rec.isDeveloper) { skippedDev++; continue; }   // 开发者账号永不参与批量改分
+        const old = rec.score|0;
+        const ns = isZero ? 0 : Math.max(0, old + delta);
+        if (ns === old) continue;                          // 没变化不写盘(清零时跳过本来就是0分的)
+        rec.score = ns;
+        try { fs.writeFileSync(fp, JSON.stringify(rec)); changed++; } catch (e) {}
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify({ ok: 1, changed: changed, skippedDev: skippedDev, total: total }));
     });
     return;
   }

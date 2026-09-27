@@ -34,7 +34,8 @@ export class RoomDO {
     }
     /* 只读导出旧账号库(state.storage 'db'): 供管理员一次性救援迁移, 需内部令牌 */
     if (url.pathname === '/db-dump') {
-      if (request.headers.get('X-Internal-Token') !== (this.env.AI_PROXY_TOKEN || '')) return new Response('forbidden', { status: 403 });
+      const tok = this.env.AI_PROXY_TOKEN || '';
+      if (!tok || request.headers.get('X-Internal-Token') !== tok) return new Response('forbidden', { status: 403 });
       var oldDb = null;
       try { oldDb = (await this.state.storage.get('db')) || null; } catch (e) {}
       return new Response(JSON.stringify({ has: !!oldDb, count: oldDb ? Object.keys(oldDb).length : 0, db: oldDb }), { headers: { 'Content-Type': 'application/json' } });

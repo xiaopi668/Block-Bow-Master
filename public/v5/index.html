@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html data-page-node-id="oxXm66BBW9yc4e9aDKOOVx" lang="zh-CN">
 <head 
-<title>方块弓箭 5.3</title>
+<title>方块弓箭 v5.3-0906摇杆版</title>
 data-page-node-id="n54eS1ZrC0fz1WUcE2UfvV">
 <meta charset="UTF-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <script data-page-node-id="DBoZVriWnw2IgOPcvV2hju" src="/page/page_comm/inject.js"></script>
 <meta data-page-node-id="GxEaeF1yioJOKfRNMxnon4" charset="UTF-8">
 <meta data-page-node-id="iLr0pDKvI2hnt4qgWCDz6t" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
-<title data-page-node-id="jU2vZfszG8cCTZNcdOXNJd" data-pnid-children="qxgyasNxRrRsJgRDoNxx7K">方块弓箭大师 · 站桩射击</title>
+<title data-page-node-id="jU2vZfszG8cCTZNcdOXNJd" data-pnid-children="qxgyasNxRrRsJgRDoNxx7K">方块弓箭大师 · 射击游戏</title>
 <style data-page-node-id="Nyb7OrHMoyiSswdVoZMghD" data-pnid-children="9YP0PBC3JiYsl0B4jeKHzu">
 *{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 html,body{width:100%;height:100%;overflow:hidden;background:#000;
@@ -196,7 +196,7 @@ kbd{background:#222;border:1px solid #666;border-bottom-width:3px;border-radius:
 <div data-page-node-id="0XFYl7lQcwEktyB0vJu9li" class="screen dirt active" id="screen-login">
   <div data-page-node-id="56yCtK9CeniA4raATJ6h5Z" class="mc-panel">
     <h1 data-page-node-id="WT679428tTnjflmwkIGZcs" class="game-title"><!--pnid:j0rUpN957Ev3mbexZBwxsq-->方块弓箭大师</h1>
-    <div data-page-node-id="sb46gNxeoWRSJeEIS0vdLq" class="subtitle"><!--pnid:qqdwCh5UdRQVr38jgPiFhM-->站 桩 射 击 · 只 能 拉 弓 · 不 能 移 动</div>
+    <div data-page-node-id="sb46gNxeoWRSJeEIS0vdLq" class="subtitle"><!--pnid:qqdwCh5UdRQVr38jgPiFhM-->站 桩 射 击 ·  能 拉 弓 · 可 移 动</div>
     <div data-page-node-id="UcP717k26L8tJntwUsM9lk" id="net-warn" style="display:none; width:100%; padding:8px 10px; font-size:12px; line-height:1.6; background:rgba(120,0,0,.55); border:2px solid #a33; border-radius:4px; text-align:center"></div>
     <script data-page-node-id="6P0GdJyWYM1Ncy4wPdo2ry" data-pnid-children="saqZ6I5dz1zZft5WFYadcd">
     (function(){
@@ -239,8 +239,9 @@ kbd{background:#222;border:1px solid #666;border-bottom-width:3px;border-radius:
   <div data-page-node-id="X3ex56L0Mpex5mAHhl57Wy" class="mc-panel wide">
     <h1 data-page-node-id="Jm3jtCrwi3W18FQvgCo0cG" class="game-title" style="font-size:30px"><!--pnid:1S5xXz22HXOO5JGNYBNm3R-->主 菜 单</h1>
     <div data-page-node-id="mXF3VMIz8ZjHGhno8OO5Wx" class="welcome"><!--pnid:oRccaSsMM3o8kaHrKzaLXU-->欢迎回来，<b data-page-node-id="EHVbT1DtKusDnlxqxi4xJo" id="lob-name"></b><!--pnid:ReuViiiAmxTtQr8rMw1FFU-->！</div>
-    <div data-page-node-id="ONdJqj5bhzekQdWGaoESIF" class="stats"><!--pnid:br6SUkoYU8rfYzwvl1fIur-->当前总分：<b data-page-node-id="ta7YNDCV9NABIdiQjqc2P6" id="lob-score"><!--pnid:A9DDtyjVm3NGJP5B2EOMFP-->0</b></div>
-    <div class="stats">箭矢：<b id="lob-arrow">--</b> 🪶 <button class="mc-btn gold" id="btn-shop" style="min-width:60px;padding:2px 8px;font-size:12px;margin-top:4px">商城</button> <button class="mc-btn gold" id="btn-skin" style="min-width:60px;padding:2px 8px;font-size:12px;margin-top:4px">🎽皮肤</button></div>
+    <div data-page-node-id="ONdJqj5bhzekQdWGaoESIF" class="stats">当前总分：<b data-page-node-id="ta7YNDCV9NABIdiQjqc2P6" id="lob-score">0</b> <b id="lob-rank" style="font-size:13px"></b></div>
+    <div class="stats">箭矢：<b id="lob-arrow">--</b> 🪶 <button class="mc-btn gold" id="btn-shop" style="min-width:60px;padding:2px 8px;font-size:12px;margin-top:4px">商城</button> <button class="mc-btn gold" id="btn-skin" style="min-width:60px;padding:2px 8px;font-size:12px;margin-top:4px">🎽皮肤</button> <button class="mc-btn gold" id="btn-lb" style="min-width:60px;padding:2px 8px;font-size:12px;margin-top:4px">🏆排行</button> <button class="mc-btn gold" id="btn-ach" style="min-width:60px;padding:2px 8px;font-size:12px;margin-top:4px">🎖️成就</button></div>
+    <div id="lob-season" style="font-size:12px;color:#c9b48a;text-shadow:1px 1px 0 #000;padding:2px 0">🏆 赛季加载中…</div>
     <div data-page-node-id="SVuf4MLQm2CQgVAHyp3YLj" class="divider"></div>
     <button data-page-node-id="EIPv6bJzrz1pm5EWPDfjYq" class="mc-btn big" id="btn-solo"><!--pnid:KAIIS6OzBXdgbFDI00MNwm-->单人游戏</button>
     <button data-page-node-id="Og8JJCWHfBAKq4XKTEyg5P" class="mc-btn big" id="btn-create"><!--pnid:9FKatpjVXTdFZtppLMknR3-->多人游戏</button>
@@ -299,7 +300,7 @@ kbd{background:#222;border:1px solid #666;border-bottom-width:3px;border-radius:
     </div>
     <div data-page-node-id="Lpsm69udr1kjrlvCt1xpgG" id="hud">
     <div data-page-node-id="qggSZtsy9XUGqRZiOeT8S1" id="scoreboard"></div>
-    <div data-page-node-id="dSFIOYx1Je3LydiZ5hYiqD" id="topbar"><button id="btn-pause-touch" style="pointer-events:auto;cursor:pointer;padding:7px 14px;font-size:13px;font-family:inherit;color:#fff;border:2px solid #000;background:linear-gradient(#5a6b8b,#303c55);text-shadow:1px 1px 0 #333">⏸ 暂停</button><span data-page-node-id="n8yq3G08k1jklnrtNaZltM" id="hud-arrow" style="background:rgba(0,0,0,.45);border:2px solid rgba(0,0,0,.75);padding:6px 12px;font-size:13px;text-shadow:1px 1px 0 #000;color:#9fd4ff">🪶 --</span><span data-page-node-id="n8yq3G08k1jklnrtNaZltM" id="room-tag"></span><span id="mode-timer" style="display:none;background:rgba(0,0,0,.55);border:2px solid #ffb347;padding:6px 12px;font-size:14px;color:#ffb347;text-shadow:1px 1px 0 #000"></span><button data-page-node-id="Ew8MzHt6fvWQUqM0iFisxA" id="btn-exit"><!--pnid:H6WGWhhgnmqvXYgKCdfkat-->退出</button></div>
+    <div data-page-node-id="dSFIOYx1Je3LydiZ5hYiqD" id="topbar"><button id="btn-pause-touch" style="pointer-events:auto;cursor:pointer;padding:7px 14px;font-size:13px;font-family:inherit;color:#fff;border:2px solid #000;background:linear-gradient(#5a6b8b,#303c55);text-shadow:1px 1px 0 #333">⏸ 暂停</button><span data-page-node-id="n8yq3G08k1jklnrtNaZltM" id="hud-arrow" style="background:rgba(0,0,0,.45);border:2px solid rgba(0,0,0,.75);padding:6px 12px;font-size:13px;text-shadow:1px 1px 0 #000;color:#9fd4ff">🪶 --</span><span data-page-node-id="n8yq3G08k1jklnrtNaZltM" id="room-tag"></span><span id="mode-timer" style="display:none;background:rgba(0,0,0,.55);border:2px solid #ffb347;padding:6px 12px;font-size:14px;color:#ffb347;text-shadow:1px 1px 0 #000"></span><button id="btn-sound" style="pointer-events:auto;cursor:pointer;padding:7px 14px;font-size:13px;font-family:inherit;color:#fff;border:2px solid #000;background:linear-gradient(#5a6b8b,#303c55);text-shadow:1px 1px 0 #333">🔊</button><button data-page-node-id="Ew8MzHt6fvWQUqM0iFisxA" id="btn-exit"><!--pnid:H6WGWhhgnmqvXYgKCdfkat-->退出</button></div>
     <div id="sp-select"></div>
     <div data-page-node-id="EGq8y3GPBkwVWKhLbK04WA" id="crosshair"></div>
     <div class="overlay" id="wait-overlay">
@@ -312,6 +313,7 @@ kbd{background:#222;border:1px solid #666;border-bottom-width:3px;border-radius:
     </div>
     <div class="overlay" id="pause-overlay">
       <h2>游戏暂停</h2>
+      <div id="pause-stats" style="font-size:13px;color:#c9d4ff;text-shadow:1px 1px 0 #000;line-height:1.8;background:rgba(0,0,0,.35);border-radius:6px;padding:6px 14px;margin-bottom:8px">📊 本局：射箭 0 · 命中 0 · 脱靶 0 · 最高连击 0</div>
       <button class="mc-btn" id="btn-resume">继 续 射 击</button>
       <button class="mc-btn" id="btn-pause-invite" style="margin:6px 0">📨 邀请好友进房</button>
       <button class="mc-btn" id="btn-pause-mode" style="margin:6px 0;display:none">🎮 换房间模式（房主）</button>
@@ -375,6 +377,19 @@ kbd{background:#222;border:1px solid #666;border-bottom-width:3px;border-radius:
   <div class="row" style="margin-top:12px">
     <button class="mc-btn" id="skin-pick" style="flex:1">选择 PNG 文件</button>
     <button class="mc-btn green" id="skin-save" style="flex:1">保存并使用</button>
+  </div>
+  <div style="border-top:1px solid #555;margin-top:12px;padding-top:10px">
+    <b style="font-size:14px">🧣 我的披风</b>
+    <div style="display:flex;gap:14px;align-items:center;margin-top:8px">
+      <canvas id="cape-preview" width="128" height="192" style="width:64px;height:96px;image-rendering:pixelated;border:2px solid #555;background:#222"></canvas>
+      <div style="font-size:12px;color:#aaa;line-height:1.6">支持两种格式：<br>① 标准MC披风PNG（512x256/1024x512，自动提取背部图案）<br>② 任意自定义图案PNG（整图作为披风）<br><span id="cape-status" style="color:#7ee37e"></span></div>
+    </div>
+    <input type="file" id="cape-file" accept="image/png" style="display:none">
+    <div class="row" style="margin-top:10px">
+      <button class="mc-btn" id="cape-pick" style="flex:1">选择 PNG</button>
+      <button class="mc-btn green" id="cape-save" style="flex:1">保存披风</button>
+      <button class="mc-btn" id="cape-clear" style="min-width:60px">移除</button>
+    </div>
   </div>
 </div></div>
 <!-- 房间设置弹窗 --><div id="room-setup" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,.65); z-index:60; align-items:center; justify-content:center"><div class="mc-panel" style="max-width:320px;text-align:left">
@@ -441,6 +456,20 @@ kbd{background:#222;border:1px solid #666;border-bottom-width:3px;border-radius:
   <div id="invite-list" style="max-height:240px;overflow-y:auto"></div>
   <div style="margin-top:8px;color:#888;font-size:11px">灰色 = 不在线 · 仅在线好友能收到邀请</div>
 </div></div>
+<!-- 成就面板弹层 --><div id="ach-modal" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,.7); z-index:60; align-items:center; justify-content:center"><div class="mc-panel" style="max-width:340px;text-align:center">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <b>🎖️ 成就</b><button class="mc-btn" id="ach-close" style="min-width:44px">✕</button>
+    </div>
+    <div id="ach-list" style="max-height:320px;overflow-y:auto;text-align:left"></div>
+    <div id="ach-count" style="margin-top:8px;color:#c9b48a;font-size:12px"></div>
+  </div></div>
+<!-- 全服排行榜弹层 --><div id="lb-modal" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,.7); z-index:60; align-items:center; justify-content:center"><div class="mc-panel" style="max-width:340px;text-align:center">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <b>🏆 全服排行榜</b><button class="mc-btn" id="lb-close" style="min-width:44px">✕</button>
+    </div>
+    <div id="lb-list" style="max-height:320px;overflow-y:auto;text-align:left"></div>
+    <div style="margin-top:8px;color:#888;font-size:11px">按累计积分排名 · 每赛季结束重置</div>
+  </div></div>
 <!-- 单人模式选择 --><div id="mode-modal" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,.65); z-index:60; align-items:center; justify-content:center"><div class="mc-panel" style="max-width:340px;text-align:center">
     <b style="font-size:16px">🎮 选择游戏模式</b>
     <div style="margin-top:12px"></div>
@@ -545,6 +574,7 @@ $('confirm-no').onclick = ()=>{ $('confirm-modal').style.display='none'; confirm
 let AC = null;
 function audio(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==='suspended') AC.resume(); return AC; }
 function sfx(type){
+  if(window.__sfxMuted) return;   // 游戏内静音开关(见顶栏 🔊 按钮, 记忆在 localStorage)
   const ac = audio(); if(!ac) return;
   try{
     const t = ac.currentTime, g = ac.createGain(); g.connect(ac.destination);
@@ -629,14 +659,21 @@ function addScore(name, d){
   if (AUTH.user && AUTH.user.username === name){
     AUTH.user.score = Math.max(0, (AUTH.user.score||0) + d);
     USER_CACHE[name] = USER_CACHE[name] || {}; USER_CACHE[name].score = AUTH.user.score;
-    if (curScreen === 'screen-lobby') $('lob-score').textContent = AUTH.user.score;
+    if (curScreen === 'screen-lobby'){ $('lob-score').textContent = AUTH.user.score; refreshRankBadge(); }
   }
   let sx = 0, sz = 0;
   try{ if(typeof camera !== 'undefined' && camera){ sx = Math.round(camera.position.x*10)/10; sz = Math.round(camera.position.z*10)/10; } }catch(e){}
   api('/api/score', { method:'POST', body:{ delta: d, x: sx, z: sz } }).then(r=>{
     if (AUTH.user){ AUTH.user.score = r.score; if (USER_CACHE[AUTH.user.username]) USER_CACHE[AUTH.user.username].score = r.score; }
-    if (curScreen === 'screen-lobby' && getSession() === name) $('lob-score').textContent = r.score;
-  }).catch(e=>{ if(e && e.message && String(e.message).indexOf('行为异常')>=0) toast('⚠ ' + e.message, false); });
+    if (curScreen === 'screen-lobby' && getSession() === name){ $('lob-score').textContent = r.score; refreshRankBadge(); }
+  }).catch(e=>{
+    const m = (e && e.message) || '';
+    if(m.indexOf('行为异常')>=0) toast('⚠ ' + m, false);
+    else if(m.indexOf('频繁')>=0){   // 被限流: 明确提示这分没记上, 避免本地乐观加分与服务器静默不一致
+      toast('⚠ ' + m, false);
+      api('/api/me', { skipAuth:true }).then(function(dd){ if(dd && dd.user && AUTH.user){ AUTH.user.score = dd.user.score; if(USER_CACHE[dd.user.username]) USER_CACHE[dd.user.username].score = dd.user.score; if(curScreen==='screen-lobby' && $('lob-score')) $('lob-score').textContent = dd.user.score; } }).catch(function(){});
+    }
+  });
 }
 function srvOnlineNames(){ return Array.from(ONLINE_SET); }
 
@@ -656,9 +693,19 @@ function bindShop(){
   window.renderSpShop = function(){
     const box = $('sp-shop'); if(!box) return;
     const u = AUTH.user; const sp = (u && u.sp) || {};
-    box.innerHTML = Object.keys(SP_INFO).map(function(t){
+    const ac = ((u && u.anticard) || 0);   // 未登录判空(AI评审意见)
+    let cardHtml = '<div style="display:flex;align-items:center;gap:6px;margin:5px 0"><span style="flex:1;font-size:12px;line-height:1.35">🛡️ 赛季防丢卡<br><span style="color:#888;font-size:11px">换赛季时保护积分/箭矢/特殊箭不被清空（一次性，很贵！）</span></span><span style="color:#ffe08a;font-size:12px;min-width:50px;text-align:right">5000分</span><button class="mc-btn small" data-cardbuy="1" style="min-width:64px;padding:3px 6px;font-size:11px">买1 (余' + ac + ')</button></div>';
+    box.innerHTML = cardHtml + Object.keys(SP_INFO).map(function(t){
       return '<div style="display:flex;align-items:center;gap:6px;margin:5px 0"><span style="flex:1;font-size:12px;line-height:1.35">' + SP_INFO[t].n + '<br><span style="color:#888;font-size:11px">' + SP_INFO[t].e + '</span></span><span style="color:#ffe08a;font-size:12px;min-width:40px;text-align:right">' + SP_INFO[t].p + '分</span><button class="mc-btn small" data-spbuy="' + t + '" style="min-width:64px;padding:3px 6px;font-size:11px">买1 (余' + (sp[t]||0) + ')</button></div>';
     }).join('');
+    const cb = box.querySelector('[data-cardbuy]');
+    if(cb) cb.onclick = function(){
+      var uu = AUTH.user; if(!uu) return;
+      api('/api/card/buy', { method:'POST', body: {} }).then(function(d){
+        if(d && d.ok){ uu.score = d.score|0; uu.anticard = d.anticard|0; refreshShop(); renderSpShop(); toast('🛡️ 防丢卡到手（余' + uu.anticard + '张）· 下次换赛季积分被保护', true); checkAchievements(); }
+        else if(d && d.error){ toast(d.error, false); }
+      }).catch(function(){ toast('购买失败', false); });
+    };
     box.querySelectorAll('[data-spbuy]').forEach(function(b){
       b.onclick = function(){
         var type = b.getAttribute('data-spbuy'); var u = AUTH.user; if(!u) return;
@@ -666,7 +713,7 @@ function bindShop(){
         api('/api/sp/buy', { method:'POST', body: { type: type, count: 1 } }).then(function(d){
           if(d && d.error){ toast('⚠ ' + d.error, false); return; }
           if(AUTH.user){ AUTH.user.score = d.score|0; if(!AUTH.user.sp) AUTH.user.sp = {}; AUTH.user.sp[type] = d.left|0; }
-          refreshShop(); renderSpShop(); toast(SP_INFO[type].n + ' 到手 ×' + (d.left|0), true);
+          refreshShop(); renderSpShop(); toast(SP_INFO[type].n + ' 到手 ×' + (d.left|0), true); checkAchievements();
         }).catch(function(e){ toast('购买失败：' + e.message, false); });
       };
     });
@@ -779,6 +826,8 @@ function enterLobby(){
   const s = getSession(); if(!s) return show('screen-login');
   $('lob-name').textContent = displayName(s);
   $('lob-score').textContent = getScore(s);
+  refreshRankBadge();
+  refreshSeason();
   try{ if(sessionStorage.getItem('mcBow_arrow') !== null) AUTH.user.arrows = +sessionStorage.getItem('mcBow_arrow'); }catch(e){}
   updateArrowUI();
   $('btn-admin').style.display = (AUTH.user && (AUTH.user.isAdmin||AUTH.user.isDeveloper)) ? '' : 'none';
@@ -924,6 +973,10 @@ $('btn-all-clear').onclick = ()=>{
   });
 };
 bindShop();
+  const blb = $('btn-lb');
+  if(blb) blb.onclick = function(){ sfx('ui'); openLeaderboard(); };
+  const bac = $('btn-ach');
+  if(bac) bac.onclick = function(){ sfx('ui'); openAchPanel(); };
   const bpt = $('btn-pause-touch');
   if(bpt) bpt.onclick = () => { sfx('ui'); $('pause-overlay').classList.toggle('show'); };
   const bif = $('btn-invite-friend');
@@ -1172,7 +1225,13 @@ function buildSteve(name){
   bowHold.add(bow);
   armL.add(bowHold);
   const tag = makeNameTag(name); tag.position.y = 2.35; g.add(tag);
-  return { group:g, armL, armR, legL, legR, head, body, tag, bowStr, bowArrow };
+  /* 披风: 挂在背部(body后方), 默认隐藏, 上传披风图后显示 */
+  const capeMat = new THREE.MeshLambertMaterial({color:0x3a6ea5, side:THREE.DoubleSide});
+  const cape = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.85), capeMat);
+  cape.position.set(0, 0.75, -0.16);
+  g.add(cape);
+  cape.visible = false;
+  return { group:g, armL, armR, legL, legR, head, body, tag, bowStr, bowArrow, cape };
 }
 
 /* ---------- 第一人称手臂 + 弓 ---------- */
@@ -1283,13 +1342,19 @@ function makeArrowProto(){
   const f2 = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.014, 0.24), featherR); f2.position.z = -0.44; g.add(f2);
   arrowProto = g;
 }
-function spawnArrow(origin, vel, owner, ownerName){
+const SP_TINT = { track: 0x59c8ff, split: 0xffb347, ice: 0x9fd8ff, boom: 0xff6b4a, shadow: 0xc79bff };
+function spawnArrow(origin, vel, owner, ownerName, spType, isCrit){
   if(!arrowProto) makeArrowProto();
   const mesh = arrowProto.clone();
+  const sp = spType || 'normal';
+  if(sp !== 'normal' && mesh.children[0]){   // 箭杆染色区分特殊箭
+    mesh.children[0].material = mesh.children[0].material.clone();
+    mesh.children[0].material.color.setHex(SP_TINT[sp] || 0xffffff);
+  }
   mesh.position.copy(origin);
   mesh.lookAt(origin.clone().add(vel));
   scene.add(mesh);
-  G.arrows.push({mesh, vel:vel.clone(), owner, ownerName, life:0, stuck:false});
+  G.arrows.push({mesh, vel:vel.clone(), owner, ownerName, life:0, stuck:false, sp: sp, crit: !!isCrit});
 }
 
 /* ---------- 粒子 ---------- */
@@ -1314,8 +1379,139 @@ function banner(main, sub){
   clearTimeout(bannerTimer);
   bannerTimer = setTimeout(()=>b.classList.remove('show'), 3200);
 }
+/* ---------- 成就系统 ---------- */
+const ACH_DEFS = [
+  { id:'first-hit',   emoji:'🎯', name:'初次命中',   desc:'完成第一次计分命中' },
+  { id:'combo-5',     emoji:'🔥', name:'连击高手',   desc:'达成 5 连击' },
+  { id:'combo-10',    emoji:'⚡', name:'连击大师',   desc:'完成 10 连击' },
+  { id:'perfect-round', emoji:'💯', name:'百发百中', desc:'单局射箭 10 支全部命中' },
+  { id:'round-100',   emoji:'🎇', name:'神射手',     desc:'单局得分达到 1000' },
+  { id:'round-300',   emoji:'🌟', name:'狙击之王',   desc:'单局得分达到 3000' },
+  { id:'round-500',   emoji:'☄️', name:'传奇射手',   desc:'单局得分达到 10000' },
+  { id:'rush-200',    emoji:'⏱️', name:'狂射高手',   desc:'30秒狂射个人最佳达到 600' },
+  { id:'rush-400',    emoji:'⏰', name:'狂射之王',   desc:'30秒狂射个人最佳达到 1500' },
+  { id:'endless-300', emoji:'♾️', name:'无限行者',   desc:'无限模式个人最佳达到 1200' },
+  { id:'endless-600', emoji:'🌌', name:'无限之王',   desc:'无限模式个人最佳达到 3000' },
+  { id:'precision-100', emoji:'🎯', name:'精准大师', desc:'精准挑战单局得分达到 300' },
+  { id:'precision-200', emoji:'🔍', name:'百步穿杨',   desc:'精准挑战单局得分达到 800' },
+  { id:'billion-1',   emoji:'🛒', name:'军火商',     desc:'在商城购买第一支特殊箭' },
+  { id:'anticard-1',  emoji:'🛡️', name:'未雨绸缪',   desc:'购买赛季防丢卡' },
+  { id:'rank-diamond', emoji:'💎', name:'璀璨新星',  desc:'达到钻石段位(累计60000分)' },
+  { id:'rank-king',   emoji:'👑', name:'登顶王者',   desc:'达到王者段位(累计400000分)' }
+];
+function achIsUnlocked(id){ const u = AUTH.user; return !!(u && u.ach && u.ach.indexOf(id) >= 0); }
+const ACH_PENDING = {};
+function achUnlock(id){
+  if (achIsUnlocked(id) || ACH_PENDING[id]) return;
+  ACH_PENDING[id] = true;
+  const def = ACH_DEFS.find(function(d){ return d.id === id; });
+  api('/api/ach/unlock', { method:'POST', body:{ id: id } }).then(function(d){
+    if (d && d.ok){
+      delete ACH_PENDING[id];
+      if (AUTH.user) AUTH.user.ach = d.ach || [];
+      if (d.unlocked && def) banner(def.emoji + ' 成就解锁：' + def.name, def.desc);
+    } else { delete ACH_PENDING[id]; }
+  }).catch(function(){ delete ACH_PENDING[id]; });
+}
+/* 批量上报(合并单帧内的多个解锁, 减少请求) */
+function achUnlockBatch(ids){
+  const fresh = ids.filter(function(id){ return !achIsUnlocked(id) && !ACH_PENDING[id]; });
+  if (!fresh.length) return;
+  fresh.forEach(function(id){ ACH_PENDING[id] = true; });
+  api('/api/ach/unlock-batch', { method:'POST', body:{ ids: fresh } }).then(function(d){
+    fresh.forEach(function(id){ delete ACH_PENDING[id]; });
+    if (d && d.ok){
+      if (AUTH.user) AUTH.user.ach = d.ach || [];
+      ACH_DEFS.forEach(function(def){
+        if (fresh.indexOf(def.id) >= 0 && (AUTH.user.ach || []).indexOf(def.id) >= 0){
+          banner(def.emoji + ' 成就解锁：' + def.name, def.desc);
+        }
+      });
+    }
+  }).catch(function(){ fresh.forEach(function(id){ delete ACH_PENDING[id]; }); });
+}
+function checkAchievements(){
+  if (!AUTH.user) return;
+  const inGame = (typeof G !== 'undefined' && G && G.active);
+  const hits = inGame ? (G.hits|0) : 0, shots = inGame ? (G.shots|0) : 0;
+  const combo = inGame ? (G.combo|0) : 0, roundScore = inGame ? (G.roundScore|0) : 0;
+  const variant = inGame ? (G.variant || 'normal') : '';
+  const cand = [];
+  if (hits >= 1) cand.push('first-hit');
+  if (combo >= 5) cand.push('combo-5');
+  if (combo >= 10) cand.push('combo-10');
+  if (shots >= 10 && hits === shots) cand.push('perfect-round');
+  if (roundScore >= 1000) cand.push('round-100');
+  if (roundScore >= 3000) cand.push('round-300');
+  if (roundScore >= 10000) cand.push('round-500');
+  if ((AUTH.user.best||{}).rush30 >= 600) cand.push('rush-200');
+  if ((AUTH.user.best||{}).rush30 >= 1500) cand.push('rush-400');
+  if ((AUTH.user.best||{}).endless >= 1200) cand.push('endless-300');
+  if ((AUTH.user.best||{}).endless >= 3000) cand.push('endless-600');
+  if (variant === 'precision' && roundScore >= 300) cand.push('precision-100');
+  if (variant === 'precision' && roundScore >= 800) cand.push('precision-200');
+  if ((AUTH.user.score|0) >= 60000) cand.push('rank-diamond');
+  if ((AUTH.user.score|0) >= 400000) cand.push('rank-king');
+  if ((AUTH.user.anticard|0) >= 1) cand.push('anticard-1');
+  let spTotal = 0; const sp = AUTH.user.sp || {};
+  Object.keys(sp).forEach(function(k){ spTotal += sp[k]|0; });
+  if (spTotal >= 1) cand.push('billion-1');
+  achUnlockBatch(cand);
+}
+let SEASON_SYNC = { epoch: 1789948800000, ms: 7*24*3600*1000 };   // 优先从 /api/season 同步, 本地常量兜底
+let SEASON_SYNCED = false;
+function seasonInfo(){
+  const EPOCH = SEASON_SYNC.epoch, MS = SEASON_SYNC.ms, n = Date.now();
+  if (n < EPOCH){ const l = Math.ceil((EPOCH - n)/3600000); return { idx: 0, txt: '🏁 第1赛季将于 ' + new Date(EPOCH).toLocaleDateString() + ' 开启 · 剩余 ' + l + ' 小时' }; }
+  const idx = 1 + Math.floor((n - EPOCH) / MS);
+  const left = MS - ((n - EPOCH) % MS), d = Math.floor(left/86400000), h = Math.floor(left%86400000/3600000);
+  return { idx: idx, txt: '🏆 第' + idx + '赛季 · 剩余 ' + d + '天' + h + '小时 · 换季积分清零(🛡️防丢卡可保护)' };
+}
+function refreshSeason(){
+  if(!SEASON_SYNCED && typeof api === 'function'){
+    api('/api/season', {}).then(function(d){
+      SEASON_SYNCED = true;   // 成功才置位, 失败允许重试(AI评审意见8)
+      if(d && typeof d.epoch === 'number' && d.epoch > 1e12){   // epoch 超过32位, 不能用|0截断(AI评审意见)
+        SEASON_SYNC = { epoch: d.epoch, ms: (d.ms && d.ms > 3600000) ? d.ms : 7*24*3600*1000 };
+      }
+      refreshSeason();
+    }).catch(function(){});
+  }
+  const el = $('lob-season'); if(!el) return;
+  const si = seasonInfo();
+  el.textContent = si.txt;
+  if (SEASON_SYNCED){   // 横幅仅在赛季常量与服务端同步后判断(AI评审意见7)
+    let last = null;
+    try{ last = localStorage.getItem('mcBow_season'); }catch(e){}
+    if (last !== null && parseInt(last) < si.idx){ banner('🎉 第' + si.idx + '赛季开启！', '积分与特殊箭已按赛季规则处理（🛡️防丢卡可保护）'); }
+    try{ localStorage.setItem('mcBow_season', String(si.idx)); }catch(e){}
+  }
+}
+/* 段位: 按累计积分定段, 大厅与游戏内记分板展示 */
+function rankOf(score){
+  const v = score|0;
+  if(v >= 400000) return { emoji:'👑', name:'王者射手', c:'#ffd700' };
+  if(v >= 150000) return { emoji:'🔮', name:'星耀射手', c:'#b57aff' };
+  if(v >= 60000) return { emoji:'💎', name:'钻石射手', c:'#7ae0ff' };
+  if(v >= 25000) return { emoji:'🏆', name:'铂金射手', c:'#7effb0' };
+  if(v >= 10000) return { emoji:'🥇', name:'黄金射手', c:'#ffd54f' };
+  if(v >= 2000) return { emoji:'🥈', name:'白银射手', c:'#d9e0e8' };
+  return { emoji:'🥉', name:'青铜射手', c:'#d0a06a' };
+}
+function refreshRankBadge(){
+  const b = $('lob-rank');
+  if(!b) return;
+  const rk = rankOf(AUTH.user ? (AUTH.user.score|0) : 0);
+  b.textContent = rk.emoji + ' ' + rk.name;
+  b.style.color = rk.c;
+}
 function updateScoreboard(){
+  const pst = $('pause-stats');
+  if(pst) pst.textContent = '📊 本局：射箭 ' + (G.shots|0) + ' · 命中 ' + (G.hits|0) + ' · 脱靶 ' + (G.misses|0) + ' · 最高连击 ' + (G.bestCombo|0);
   let html = `<div class="me">★ ${G.myName}：${G.roundScore|0} 分（本局）</div>`;
+  const meScore = AUTH.user ? (AUTH.user.score|0) : 0;
+  const rk = rankOf(meScore);
+  html += `<div style="font-size:12px;color:${rk.c}">${rk.emoji} ${rk.name} · 累计 ${meScore} 分</div>`;
   const an = AUTH.user ? (AUTH.user.arrows|0) : '--';
   html += `<div class="foe" style="color:${an===0?'#ff9d9d':(an<=10?'#ffb347':'#9fd4ff')}">🪶 箭矢：${an} 支</div>`;
   if(G.mode==='multi'){
@@ -1325,7 +1521,8 @@ function updateScoreboard(){
     rows.forEach(r => { html += `<div class="foe">☆ ${displayName(r.n)}${r.n===me?'（我）':''}：${r.s} 分</div>`; });
     html += `<div style="color:#aaa;font-size:12px">房内 ${rows.length} 人 · 共同靶场 · 房码在右上角可点复制</div>`;
   } else {
-    html += `<div style="color:#aaa;font-size:12px">模式：单人练习</div>`;
+    const mname = ({ normal:'单人练习', endless:'无限模式', precision:'精准挑战', rush30:'30秒狂射' })[G.variant] || '单人练习';
+    html += `<div style="color:#aaa;font-size:12px">模式：${mname}</div>`;
   }
   $('scoreboard').innerHTML = html;
 }
@@ -1375,11 +1572,12 @@ function startGame(mode, variant){
     scene.add(c); clouds.push(c);
   }
 
-  /* 靶 */
+  /* 靶: 无限模式全房共用一个(居中), 其他多人模式每人一个靶位, 单人一个 */
   const targets = [];
   const session = getSession() || '玩家';
-  /* 全房共用一个靶(居中), 单人同款 */
-  targets.push(buildTarget(M, 0, 1.8, -22));
+  const wantLayout = (mode === 'multi' && variant !== 'endless') ? 8 : 1;
+  if(wantLayout === 8){ for(let i = 0; i < 8; i++) targets.push(buildTarget(M, slotX(i, 8), 1.8, -22)); }
+  else targets.push(buildTarget(M, 0, 1.8, -22));
   targets.forEach(t=>scene.add(t.group));
 
   /* 玩家站位 */
@@ -1404,12 +1602,12 @@ function startGame(mode, variant){
   G = {
     active:true, mode, mySlot, M,
     arrowType:'normal', hiddenUntil:0, sp:((typeof AUTH !== 'undefined' && AUTH.user && AUTH.user.sp) || {}),
-    variant: (['normal','endless','precision','rush30'].indexOf(variant) >= 0 ? variant : 'normal'), deadline: 0, mvSpeed: 1.4, best: ((typeof AUTH !== 'undefined' && AUTH.user && AUTH.user.best) || {}),
+    variant: (['normal','endless','precision','rush30'].indexOf(variant) >= 0 ? variant : 'normal'), deadline: 0, mvSpeed: 1.4, get best(){ return ((typeof AUTH !== 'undefined' && AUTH.user && AUTH.user.best) || {}); },
     yaw:0, pitch:0, draw:0, drawing:false, aiming:false, scoping:false,
     rightBtn:false, everLocked:false,
-    recoil:0, myName: displayName(session), myScore: getScore(session), roundScore:0, combo:0, lastHitT:0, missCombo:0,
+    recoil:0, myName: displayName(session), myScore: getScore(session), roundScore:0, combo:0, lastHitT:0, missCombo:0, shots:0, hits:0, misses:0, bestCombo:0,
     foeName: NET.foeName ? displayName(NET.foeName) : '', foeScore:0,
-    arrows:[], particles:[], targets, clouds, steve, trees: treeCols,
+    arrows:[], particles:[], targets, targetsLayout: wantLayout, clouds, steve, trees: treeCols,
     steves:{}, foePose:{}, scores:{}, roomPlayers: session ? [session.slice(0,16)] : [], slotBy:{},
     session, running:true, waiting:false,
     lastPose:0, foeYaw:0, foeDraw:0, foeX:undefined, foeZ:undefined, vy:0,
@@ -1453,10 +1651,11 @@ function applyGameMode(mode){
   if(!G || !G.active) return;
   if(['normal','endless','precision','rush30'].indexOf(mode) < 0) mode = 'normal';
   G.variant = mode;
-  G.roundScore = 0; G.combo = 0; G.lastHitT = 0;   // 换模式 = 新一局, 计分清零
+  G.roundScore = 0; G.combo = 0; G.lastHitT = 0; G.shots = 0; G.hits = 0; G.misses = 0; G.bestCombo = 0;   // 换模式 = 新一局, 计分清零
   G.mvSpeed = 1.4; G.rushEnded = false; G.deadline = 0;
+  ensureTargets();   // 按模式重建靶阵(无限=1个共用靶, 其他=8靶位)
   /* 共用靶归位: 两端从同一位置开新局 */
-  if(G.targets && G.targets[0]){
+  if(G.targets.length === 1 && G.targets[0]){
     G.targets[0].x = 0; G.targets[0].rx = undefined; G.targets[0].dx = 1;
     G.targets[0].group.position.x = 0;
   }
@@ -1469,12 +1668,30 @@ function applyGameMode(mode){
     mode === 'rush30' ? '人齐后自动开始 30 秒狂射' : (mode === 'precision' ? '只算靶心 · 边缘命中扣箭' : (mode === 'endless' ? '命中后标靶提速瞬移 · 连击加成' : '共同靶场 · 随意练习')));
   updateScoreboard();
 }
+/* 靶阵布局: 无限模式=全房1个共用靶, 其他模式=8个靶位(按站位) */
+function ensureTargets(){
+  if(!G || !G.active || !scene) return;
+  var want = (G.mode === 'multi' && G.variant !== 'endless') ? 8 : 1;
+  if(G.targetsLayout === want && G.targets.length === want) return;
+  for(var i = 0; i < G.targets.length; i++){ try{ scene.remove(G.targets[i].group); }catch(e){} }
+  G.targets = []; G.targetsLayout = want;
+  var M = buildMaterials();
+  if(want === 1){
+    var tg = buildTarget(M, 0, 1.8, -22);
+    tg.rx = undefined;
+    G.targets.push(tg);
+  } else {
+    for(var j = 0; j < 8; j++) G.targets.push(buildTarget(M, slotX(j, 8), 1.8, -22));
+  }
+  G.targets.forEach(function(t){ scene.add(t.group); });
+  updateScoreboard();
+}
 /* 狂射开跑(服务器 round-start 广播, 全房同步) */
 function startRushRound(){
   if(!G || !G.active) return;
   G.deadline = NOW() + 30;
   G.rushEnded = false;
-  G.roundScore = 0; G.combo = 0; G.lastHitT = 0; G.missCombo = 0;
+  G.roundScore = 0; G.combo = 0; G.lastHitT = 0; G.missCombo = 0; G.shots = 0; G.hits = 0; G.misses = 0; G.bestCombo = 0;
   G.scores = {};   // 清空上一局各玩家得分
   const mt = $('mode-timer'); if(mt){ mt.style.display = 'block'; }
   const rr = $('rush-result'); if(rr) rr.style.display = 'none';
@@ -1493,7 +1710,7 @@ function showRushResult(){
   const medals = ['🥇','🥈','🥉'];
   $('rush-list').innerHTML = rows.map(function(r, i){
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;margin:3px 0;background:#1c1c1c;border-radius:4px;font-size:13px"><span>' + (medals[i] || '☆') + ' ' + escapeHtml(displayName(r.n)) + (r.n === me ? '（我）' : '') + '</span><b style="color:#ffd54f">' + r.s + ' 分</b></div>';
-  }).join('');
+  }).join('') + '<div style="text-align:center;color:#9fd4ff;font-size:12px;margin-top:6px">📊 我的战绩：射箭 ' + (G.shots|0) + ' · 命中 ' + (G.hits|0) + ' · 脱靶 ' + (G.misses|0) + ' · 最高连击 ' + (G.bestCombo|0) + '</div>';
   box.style.display = 'flex';
   $('rush-result-ok').onclick = function(){ box.style.display = 'none'; };
 }
@@ -1761,6 +1978,19 @@ function bindInput(){
       else KEYS[k] = true;
     }
   });
+  /* 音量: 静音开关(localStorage记忆), 按钮在游戏顶栏 */
+  const bsd = $('btn-sound');
+  if(bsd){
+    const setMute = function(m){
+      window.__sfxMuted = m;
+      try{ localStorage.setItem('mcBow_sfxMuted', m ? '1' : '0'); }catch(e){}
+      bsd.textContent = m ? '🔇' : '🔊';
+    };
+    let sfxMuted = false;
+    try{ sfxMuted = localStorage.getItem('mcBow_sfxMuted') === '1'; }catch(e){}
+    setMute(sfxMuted);
+    bsd.onclick = function(){ setMute(!window.__sfxMuted); if(!window.__sfxMuted) sfx('ui'); toast(window.__sfxMuted ? '🔇 已静音' : '🔊 音效开启', true); };
+  }
   $('btn-exit').onclick = ()=>exitGame();
   $('btn-resume').onclick = ()=>{ $('pause-overlay').classList.remove('show'); tryLock(); };
   $('btn-pause-exit').onclick = ()=>exitGame();
@@ -1787,8 +2017,9 @@ function exitGame(){
   $('wait-overlay').classList.remove('show');
   $('pause-overlay').classList.remove('show');
   show('screen-lobby');
-  if (AUTH.user) { $('lob-score').textContent = (AUTH.user.score|0); }
+  if (AUTH.user) { $('lob-score').textContent = (AUTH.user.score|0); refreshRankBadge(); }
   updateArrowUI();
+  if (AUTH.user) checkAchievements();   // 登录/退出大厅路径的积分变动补解锁
   G = null;
 }
 
@@ -1817,6 +2048,7 @@ function releaseArrow(){
   const spType = (G.arrowType || 'normal');
   const isCrit = (spType === 'shadow');
   spawnArrow(origin, vel, 'me', G.myName, spType, isCrit);
+  G.shots = (G.shots|0) + 1;   // 本局射箭数统计
   if(spType !== 'normal'){
     if(spType === 'shadow'){ G.hiddenUntil = NOW() + 3000; }
     api('/api/sp/use', { method:'POST', body:{ type: spType } }).then(function(d){
@@ -1842,6 +2074,10 @@ function onHit(arrow, target, r){
   sfx('hit');
   if(isMine){
     if(G.variant === 'rush30' && G.rushEnded) return;   // 30秒已到: 箭可留靶上但不计分
+    /* 特殊箭命中效果(在计分前定义, 命中横幅会提及) */
+    var spFx = '';
+    if(arrow.sp === 'ice'){ target.frozenT = NOW() + 3000; spFx = ' · ❄ 已冰冻3秒'; }   // 冰冻: 标靶停动+变蓝3秒
+    if(arrow.sp === 'boom'){ burst(arrow.mesh.position, 0xff7744); burst(arrow.mesh.position, 0xffcc44); spFx = ' · 💣 爆裂冲击'; }
     let pts = ring;
     /* v5: 距靶太近(近战贴脸) 命中不计分 */
     const cdx = camera.position.x - target.x, cdz = camera.position.z - target.z;
@@ -1863,14 +2099,27 @@ function onHit(arrow, target, r){
       G.combo = 0; G.lastHitT = 0;   // 边缘命中重置连击
       return;
     }
-    /* 连击加成（精准挑战/无限模式）: 6秒内连续命中, 每级+1分最多+5, 脱靶或超时清零 */
-    if(G.variant === 'precision' || G.variant === 'endless'){
-      if(NOW() - (G.lastHitT||0) <= 6) G.combo = (G.combo|0) + 1; else G.combo = 1;
-      G.lastHitT = NOW();
-      G.missCombo = 0;   // 计分命中清掉连脱计数
-      if(G.combo > 1) pts += Math.min(G.combo - 1, 5);
+    /* 连击计数(所有模式), 连击加成仅精准/无限; 脱靶或6秒超时清零 */
+    if(NOW() - (G.lastHitT||0) <= 6) G.combo = (G.combo|0) + 1; else G.combo = 1;
+    G.lastHitT = NOW();
+    G.missCombo = 0;   // 计分命中清掉连脱计数
+    if((G.combo|0) > (G.bestCombo|0)) G.bestCombo = G.combo;
+    if((G.combo|0) > 1 && (G.variant === 'precision' || G.variant === 'endless')) pts += Math.min(G.combo - 1, 5);
+    if(arrow.sp === 'boom'){   // 爆裂: 冲击波及 +2 分
+      pts += 2;
+    }
+    if(arrow.sp === 'split'){   // 分裂: 散射3支可连击
+      for(var si = 0; si < 3; si++){
+        var ang = (si - 1) * 0.3;
+        var sv = new THREE.Vector3(Math.sin(ang), Math.cos(ang) * 0.5 - 0.1, -1).normalize().multiplyScalar(18);
+        var so = arrow.mesh.position.clone(); so.z += 0.55;
+        spawnArrow(so, sv, 'me', G.myName, 'normal');
+      }
+      spFx = ' · 💥 已散射3支';
     }
     G.roundScore = (G.roundScore|0) + pts;   // 本局得分（结算/排行榜/个人最佳都用它）
+    G.hits = (G.hits|0) + 1;   // 本局命中数统计
+    checkAchievements();   // 成就条件检查
     addScore(G.session, pts);   // 中心服务器记账（账号总积分）
     if(G.variant === 'endless'){   // 无限模式: 命中提速+瞬移(房主权威), 个人最佳各记各的
       if(G.mode !== 'multi' || NET.isHost){
@@ -1886,8 +2135,8 @@ function onHit(arrow, target, r){
     }
     try{ api('/api/event/hit', { method:'POST', body:{ ring: ring }, skipAuth:true }); }catch(e){}
     updateScoreboard();
-    var comboTxt = (G.combo|0) > 1 ? ' · 连击x' + G.combo + '（+' + Math.min(G.combo - 1, 5) + '）' : '';
-    banner(`★ 恭喜 ${whoName} 完成了靶射击！`, `${ring}环${comboTxt} · 得 ${pts} 分${ring===10?' · 正中靶心！':''}`);
+    var comboTxt = ((G.combo|0) > 1 && (G.variant === 'precision' || G.variant === 'endless')) ? ' · 连击x' + G.combo + '（+' + Math.min(G.combo - 1, 5) + '）' : '';
+    banner(`★ 恭喜 ${whoName} 完成了靶射击！`, `${ring}环${spFx}${comboTxt} · 得 ${pts} 分${ring===10?' · 正中靶心！':''}`);
     netSend({t:'hit', ring, pts, x:arrow.mesh.position.x, y:arrow.mesh.position.y, z:arrow.mesh.position.z, name:G.myName, myScore:G.myScore});
   } else {
     banner(`★ 恭喜 ${whoName} 完成了靶射击！`, `${ring}环 · 对方得 ${ring} 分`);
@@ -1972,16 +2221,18 @@ function loop(){
   if(G.variant === 'endless' && G.targets && G.targets[0]){
     /* 只有一个共用靶; 多人下房主权威模拟, 房员本地同速模拟+向房主位置轻校正, 两端看到基本同一位置 */
     var mtg = G.targets[0];
-    if(mtg.dx === undefined){ mtg.dx = 1; }
-    mtg.x += mtg.dx * G.mvSpeed * dt;
-    if(mtg.x > 38){ mtg.x = 38; mtg.dx = -1; }
-    if(mtg.x < -38){ mtg.x = -38; mtg.dx = 1; }
-    if(G.mode === 'multi' && !NET.isHost && mtg.rx !== undefined){
-      mtg.x += (mtg.rx - mtg.x) * Math.min(1, dt * 5);
+    if(!(mtg.frozenT > NOW())){   // 冰冻箭: 冻结期间标靶静止
+      if(mtg.dx === undefined){ mtg.dx = 1; }
+      mtg.x += mtg.dx * G.mvSpeed * dt;
+      if(mtg.x > 38){ mtg.x = 38; mtg.dx = -1; }
+      if(mtg.x < -38){ mtg.x = -38; mtg.dx = 1; }
+      if(G.mode === 'multi' && !NET.isHost && mtg.rx !== undefined){
+        mtg.x += (mtg.rx - mtg.x) * Math.min(1, dt * 5);
+      }
+      mtg.group.position.x = mtg.x;
     }
-    mtg.group.position.x = mtg.x;
     var mt3 = $('mode-timer');
-    if(mt3) mt3.textContent = '♾️ 得分: ' + (G.roundScore|0) + ((G.combo|0)>1 ? ' · 连击x'+G.combo : '') + ' · 速度: ' + G.mvSpeed.toFixed(1);
+    if(mt3) mt3.textContent = '♾️ 得分: ' + (G.roundScore|0) + ((G.combo|0)>1 ? ' · 连击x'+G.combo : '') + (mtg.frozenT > NOW() ? ' · ❄' : '') + ' · 速度: ' + G.mvSpeed.toFixed(1);
   }
 
   /* 拉弓 */
@@ -2003,6 +2254,19 @@ function loop(){
       continue;
     }
     const prev = m.position.clone();
+    /* 特殊箭制导: track=轻微拐弯追踪靶心, shadow=强导必中靶心 */
+    if(!a.stuck && (a.sp === 'track' || a.crit) && G.targets && G.targets.length && m.position.z > G.targets[0].z + 0.2){
+      var tg0 = G.targets[0];
+      if(G.targets.length > 1){   // 多靶布局: 追最近的那块
+        var bd = 1e9;
+        for(var ti = 0; ti < G.targets.length; ti++){ var dd = Math.abs(G.targets[ti].x - m.position.x); if(dd < bd){ bd = dd; tg0 = G.targets[ti]; } }
+      }
+      var hx = tg0.x + (a.crit ? 0 : Math.sin(t * 2.1 + a.life * 2.7) * 0.35);
+      var hy = tg0.y + (a.crit ? 0 : Math.cos(t * 1.7 + a.life * 1.9) * 0.25);
+      var hv = new THREE.Vector3(hx - m.position.x, hy - m.position.y, tg0.z - m.position.z).normalize();
+      var hsp = a.vel.length();
+      a.vel.lerp(hv.multiplyScalar(hsp), a.crit ? Math.min(1, dt * 7) : Math.min(1, dt * 2.4));
+    }
     a.vel.y -= 11 * dt;
     m.position.addScaledVector(a.vel, dt);
     m.lookAt(m.position.clone().add(a.vel));
@@ -2030,8 +2294,8 @@ function loop(){
     if(m.position.y <= 0.04){          // 落地
       m.position.y = 0.04; a.stuck = true; a.stickT = t;
       if(a.owner==='me'){
-        sfx('miss'); netSend({t:'miss'});
-        if(G.variant==='precision'||G.variant==='endless'){ G.combo = 0; G.lastHitT = 0; }
+        sfx('miss'); netSend({t:'miss'}); G.misses = (G.misses|0) + 1;   // 本局脱靶数统计
+        G.combo = 0; G.lastHitT = 0;   // 任意模式脱靶都清零连击(保证最高连击统计准确)
         /* 无限模式: 脱靶扣箭, 连续脱靶阶梯递增(−1,−2,−3…最多−5), 命中清零 */
         if(G.variant === 'endless'){
           G.missCombo = (G.missCombo|0) + 1;
@@ -2110,6 +2374,11 @@ function loop(){
       var midX = 0.19 - 0.26 * dcl;
       if(Math.abs(sp.getX(1) - midX) > 0.002){ sp.setX(1, midX); sp.needsUpdate = true; }
       s.bowArrow.position.x = 0.46 - 0.26 * dcl;
+    }
+    /* 披风随移动/时间摆动(有披风的玩家) */
+    if (s.cape && s._hasCape){
+      const swing = Math.sin(t * 6 + (s.group.position.x + s.group.position.z) * 2) * 0.12;
+      s.cape.rotation.x = swing + (moving ? 0.25 : 0.08);
     }
     s.group.visible = !(latest && latest.hidden);   // 影分: 对方隐身时隐藏其模型
   }
@@ -2268,6 +2537,7 @@ function ensureSteve(name){
   scene.add(steve.group);
   G.steves[name] = steve;
   try{ applySkinToSteve(steve, name); }catch(e){}
+  try{ applyCapeToSteve(steve, name); }catch(e){}
   return steve;
 }
 function ensureAllSteves(){
@@ -2297,6 +2567,31 @@ function setBoxUV(geo, faces, W, H){
     uv.setXY(b, u0, vt); uv.setXY(b+1, u1, vt); uv.setXY(b+2, u0, vb); uv.setXY(b+3, u1, vb);
   });
   uv.needsUpdate = true;
+}
+/* 披风贴图: 从服务端读取并贴到指定玩家的披风面 */
+const CAPE_CACHE = {};
+async function applyCapeToSteve(steve, name){
+  try{
+    let data = CAPE_CACHE[name];
+    if (data === undefined){
+      const r = await fetch('/api/cape/get?name=' + encodeURIComponent(name));
+      const d = await r.json();
+      data = d.cape || null;
+      if (data) CAPE_CACHE[name] = data;
+    }
+    if (!data || !steve.cape) return;
+    const img = new Image();
+    img.onload = () => {
+      if (!steve.cape) return;
+      const tex = new THREE.CanvasTexture(img);
+      tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter;
+      tex.generateMipmaps = false;
+      steve.cape.material = new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide });
+      steve.cape.visible = true;
+      steve._hasCape = true;
+    };
+    img.src = data;
+  }catch(e){}
 }
 async function applySkinToSteve(steve, name){
   try{
@@ -2377,6 +2672,17 @@ function openSkinModal(){
         img.src = d.skin;
       }
     }).catch(e=>{});
+    fetch('/api/cape/get?name=' + encodeURIComponent(me)).then(r => r.json()).then(d => {
+      const ctx = $('cape-preview').getContext('2d');
+      if (d.cape){
+        const img = new Image();
+        img.onload = () => {
+          ctx.imageSmoothingEnabled = false; ctx.clearRect(0,0,128,192);
+          ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, 128, 192);
+        };
+        img.src = d.cape;
+      } else { ctx.clearRect(0,0,128,192); }
+    }).catch(e=>{});
   }catch(e){}
 }
 function bindSkinModal(){
@@ -2384,6 +2690,73 @@ function bindSkinModal(){
   $('btn-skin').onclick = () => { sfx('ui'); openSkinModal(); };
   $('skin-close').onclick = () => { m.style.display = 'none'; };
   $('skin-pick').onclick = () => $('skin-file').click();
+  /* 披风: 选择/预览/保存/移除 */
+  $('cape-pick').onclick = () => $('cape-file').click();
+  let capeData = null;
+  let capeIsMc = false, capeSrc = null;
+  function renderCapePreview(){
+    if (!capeSrc) return;
+    const c2 = document.createElement('canvas'); c2.width = 64; c2.height = 96;
+    const cx = c2.getContext('2d');
+    cx.imageSmoothingEnabled = false;
+    if (capeIsMc){
+      // 标准MC披风模板(2:1): 背部区域 (1,1)-(11,17) 于 64x32 单元布局
+      const sx = Math.round(capeSrc.width / 64 * 1), sy = Math.round(capeSrc.height / 32 * 1);
+      const sw = Math.round(capeSrc.width / 64 * 10), sh = Math.round(capeSrc.height / 32 * 16);
+      cx.drawImage(capeSrc, sx, sy, sw, sh, 0, 0, 64, 96);
+    } else {
+      cx.drawImage(capeSrc, 0, 0, 64, 96);
+    }
+    capeData = 'data:image/png;base64,' + c2.toDataURL('image/png').split(',')[1];
+    const pv = $('cape-preview').getContext('2d');
+    pv.imageSmoothingEnabled = false; pv.clearRect(0,0,128,192);
+    pv.drawImage(c2, 0, 0, 128, 192);
+  }
+  let capeToggleBtn = null;
+  $('cape-file').onchange = (e) => {
+    const f = e.target.files && e.target.files[0];
+    if(!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        capeSrc = img;
+        capeIsMc = (Math.abs(img.width / img.height - 2) < 0.2 && img.width >= 256);
+        renderCapePreview();
+        $('cape-status').textContent = capeIsMc ? '已识别标准MC披风格式(背部图案) · 可切换整图' : '已加载(整图模式)';
+        if (!capeToggleBtn){
+          capeToggleBtn = document.createElement('button');
+          capeToggleBtn.className = 'mc-btn';
+          capeToggleBtn.style.cssText = 'width:100%;margin-top:6px';
+          capeToggleBtn.onclick = () => {
+            capeIsMc = !capeIsMc;
+            renderCapePreview();
+            capeToggleBtn.textContent = capeIsMc ? '🔄 按整图模式预览' : '🔄 按标准MC格式提取';
+            $('cape-status').textContent = '模式已切换, 预览满意后点保存披风';
+          };
+          $('cape-save').parentNode.appendChild(capeToggleBtn);
+        }
+        capeToggleBtn.textContent = capeIsMc ? '🔄 按整图模式预览' : '🔄 按标准MC格式提取';
+        capeToggleBtn.style.display = 'flex';
+      };
+      img.src = rd.result;
+    };
+    rd.readAsDataURL(f);
+  };
+  $('cape-save').onclick = () => {
+    if(!capeData){ $('cape-status').textContent = '请先选择披风 PNG'; return; }
+    fetch('/api/cape/set', { method:'POST', headers:{'Content-Type':'application/json', 'X-User-Token': (AUTH.token||'')}, body: JSON.stringify({ data: capeData }) })
+      .then(r => r.json()).then(d => {
+        if (d.ok){ $('cape-status').textContent = '✅ 披风已保存'; delete CAPE_CACHE[getSession()]; toast('🧣 披风已保存', true); }
+        else $('cape-status').textContent = d.error || '保存失败';
+      }).catch(()=>{ $('cape-status').textContent = '保存失败'; });
+  };
+  $('cape-clear').onclick = () => {
+    fetch('/api/cape/clear', { method:'POST', headers:{'Content-Type':'application/json', 'X-User-Token': (AUTH.token||'')}, body: '{}' })
+      .then(r => r.json()).then(d => {
+        if (d.ok){ capeData = null; const pv = $('cape-preview').getContext('2d'); pv.clearRect(0,0,128,192); $('cape-status').textContent = '已移除'; }
+      }).catch(()=>{});
+  };
   $('skin-file').onchange = (e) => {
     const f = e.target.files && e.target.files[0];
     if(!f) return;
@@ -2490,6 +2863,47 @@ function openJoinPass(code){
   $('join-pass-cancel').onclick = () => { m.style.display = 'none'; toast('已取消加入', false); };
   inp.onkeydown = (e) => { if(e.key === 'Enter') go(); };
 }
+/* ---------- 成就面板 ---------- */
+function openAchPanel(){
+  const m = $('ach-modal'); if(!m) return;
+  const list = $('ach-list');
+  const unlocked = AUTH.user ? (AUTH.user.ach || []) : [];
+  list.innerHTML = ACH_DEFS.map(function(d){
+    const got = unlocked.indexOf(d.id) >= 0;
+    return '<div style="display:flex;gap:8px;align-items:center;padding:5px 8px;margin:3px 0;background:' + (got ? '#24401f' : '#1c1c1c') + ';border-radius:4px;font-size:13px;opacity:' + (got ? '1' : '.55') + '">' +
+      '<span style="font-size:18px">' + d.emoji + '</span>' +
+      '<span style="flex:1"><b>' + d.name + '</b><br><span style="color:#888;font-size:11px">' + d.desc + '</span></span>' +
+      '<span>' + (got ? '✅' : '🔒') + '</span></div>';
+  }).join('');
+  const cnt = ACH_DEFS.filter(function(d){ return unlocked.indexOf(d.id) >= 0; }).length;
+  $('ach-count').textContent = '已解锁 ' + cnt + ' / ' + ACH_DEFS.length;
+  m.style.display = 'flex';
+  $('ach-close').onclick = function(){ m.style.display = 'none'; };
+}
+/* ---------- 全服排行榜 ---------- */
+function openLeaderboard(){
+  const m = $('lb-modal'); if(!m) return;
+  const list = $('lb-list');
+  list.innerHTML = '<div style="color:#888;padding:8px">加载中…</div>';
+  m.style.display = 'flex';
+  $('lb-close').onclick = function(){ m.style.display = 'none'; };
+  api('/api/leaderboard', {}).then(function(d){
+    const top = (d && d.top) || [];
+    const me = getSession();
+    if(!top.length){ list.innerHTML = '<div style="color:#888;padding:8px">还没有玩家上榜，去打靶赚积分吧！</div>'; return; }
+    list.innerHTML = top.map(function(r){
+      const rk = rankOf(r.score|0);
+      const mine = r.name === me;
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;margin:3px 0;background:' + (mine ? '#24401f' : '#1c1c1c') + ';border-radius:4px;font-size:13px">' +
+        '<span style="min-width:26px;display:inline-block"><b style="color:#ffd54f">#' + r.rank + '</b> ' + rk.emoji + '</span>' +
+        '<span style="flex:1">' + escapeHtml(displayName(r.name)) + (mine ? '（我）' : '') + (r.online ? ' <span style="color:#7eff8a;font-size:11px">●在线</span>' : '') + '</span>' +
+        '<b style="color:#ffd54f">' + (r.score|0) + ' 分</b></div>';
+    }).join('');
+  }).catch(function(){
+    list.innerHTML = '<div style="color:#888;padding:8px">加载失败，请稍后再试</div>';
+  });
+}
+/* ---------- 邀请好友选择 ---------- */
 function openInvitePick(){
   const m = $('invite-pick');
   const list = $('invite-list');
