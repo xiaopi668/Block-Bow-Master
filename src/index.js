@@ -296,7 +296,7 @@ async function apiBody(request, env, url) {
       /* 吊销令牌(渗透#6): 账号版本号 tv +1 → 该账号所有已签发令牌立即失效。
          吊销必须落在数据服务上并检查返回值: 只进 dirty 队列再"假装成功", 数据服务挂掉时
          登出其实没生效; 整条覆盖式回写则可能丢掉并发写入的分数/私信, 所以先 dsPatch 只写 tv,
-         吊销生效后再读改写同步 KV 中的 tv(基于最新值, 不覆盖并发字段) */
+         吊销生效后再读改写回写数据服务里的记录(基于最新值, 不覆盖并发字段) */
       const tvNew = ((me.tv | 0) + 1);
       let okLg = false;
       try { const rL = await dsPatch(env, me.name, { tv: tvNew }); okLg = !!rL; } catch (e) { okLg = false; }
