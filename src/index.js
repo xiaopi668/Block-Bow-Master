@@ -140,9 +140,13 @@ export default {
     const url = new URL(request.url);
 
     /* 明文 HTTP 一律跳 HTTPS: X-User-Token 是明文令牌, 不能走明文通道(渗透#8)。
-       本地 wrangler dev 只有 http, 放行 127./localhost, 否则本地调试会被自己重定向 */
-    const isLocal = url.hostname === 'localhost' || url.hostname === '[::1]' || url.hostname.indexOf('127.') === 0;
-    if (url.protocol === 'http:' && !isLocal) return Response.redirect('https://' + url.host + url.pathname + url.search, 301);
+       放行回环地址与内网地址(本地 wrangler dev、自建反代/LAN 部署只有 http, 否则会被自己重定向)。
+       用严格正则: 原来 `indexOf('127.')===0` 会把 127.evil.com 这种域名也当回环放行 */
+    const hn = url.hostname;
+    const isLocal = hn === 'localhost' || hn === '[::1]' || /^127(\.\d{1,3}){3}$/.test(hn);
+    const isPrivate = /^10(\.\d{1,3}){3}$/.test(hn) || /^192\.168(\.\d{1,3}){2}$/.test(hn) ||
+      /^172\.(1[6-9]|2\d|3[01])(\.\d{1,3}){2}$/.test(hn);
+    if (url.protocol === 'http:' && !isLocal && !isPrivate) return Response.redirect('https://' + url.host + url.pathname + url.search, 301);
 
     /* WebSocket upgrade -> Durable Object（原样转发, DO 自行验签） */
     if (url.pathname === '/ws' && request.headers.get('Upgrade') === 'websocket') {
@@ -154,12 +158,12 @@ export default {
       try {
         const res = await env.ASSETS.fetch(request);
         const h = new Headers(res.headers);
-        h.set('Cache-Control', 'private, no-store, max-age=0');
+        h.set('Cache-Control', 'no-cache');   // 允许 ETag 复验(304), 既不给过期 HTML 也不让 1.6MB 每次全量重下
         h.set('CDN-Cache-Control', 'no-store');
         /* 安全响应头(渗透#8): 全站原本一个都没有 */
         h.set('X-Content-Type-Options', 'nosniff');
-        h.set('X-Frame-Options', 'SAMEORIGIN');           // 登录页不得被外部 iframe 嵌套(点击劫持)
-        h.set('Content-Security-Policy', "frame-ancestors 'none'");   // 只管 frame, 不碰内联脚本, 零兼容风险
+        h.set('Content-Security-Policy', "frame-ancestors 'none'");   // 点击劫持: 只管 frame, 不碰内联脚本, 零兼容风险
+        h.set('X-Frame-Options', 'DENY');                              // 与 frame-ancestors 'none' 同义, 兼容老浏览器(不与之矛盾)
         h.set('Referrer-Policy', 'strict-origin-when-cross-origin');
         h.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
         h.set('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
@@ -264,14 +268,6 @@ async function apiBody(request, env, url) {
         const pass = String(body.password || '');
         const lgnKey = 'lgn:' + name.toLowerCase();   // 账号级桶: 只记密码错误(见下), 不预检
         let u = await readUser(env, name);
-        if (!u) {
-          /* KV 副本可能滞后: 回源 DO 查询 */
-          try {
-            const stub = env.ROOM.get(env.ROOM.idFromName('bow-live5'));
-            const rr = await stub.fetch('https://do/user-check?name=' + encodeURIComponent(name));
-            if (rr.ok) { const d = await rr.json(); if (d.name && d.user) u = d.user; }
-          } catch (e) {}
-        }
         if (!u) return json({ error: '账号或密码错误！' }, 400);   // 统一文案: 消除用户名枚举(渗透#3)
         if (!u.salt && !u.pass) {
           /* 自动建档账号（无密码）首次登录即认领: 设置密码 */
@@ -297,12 +293,14 @@ async function apiBody(request, env, url) {
 
     if (!me) return json({ error: '未登录或登录已过期' }, 401);
     if (path === '/api/logout' && request.method === 'POST') {
-      /* 吊销令牌(渗透#6): 账号版本号 tv +1, 该账号所有已签发令牌立即失效(含刚登出的这张、
-         以及被偷走的旧令牌)。令牌里带 v, 下次签发用最新 tv */
-      try {
-        const uL = await readUser(env, me.name);
-        if (uL) { uL.tv = (uL.tv | 0) + 1; await writeUser(env, me.name, uL); }
-      } catch (e) {}
+      /* 吊销令牌(渗透#6): 账号版本号 tv +1 → 该账号所有已签发令牌立即失效。
+         用 dsPatch 只写 tv 字段并检查返回值: 整条回写会把并发写入的分数/私信覆盖掉,
+         而只进 dirty 队列再"假装成功"的话, 数据服务挂掉时登出其实没生效 */
+      const tvNew = ((me.tv | 0) + 1);
+      let okLg = false;
+      try { const rL = await dsPatch(env, me.name, { tv: tvNew }); okLg = !!rL; } catch (e) { okLg = false; }
+      if (!okLg) return json({ error: '登出失败，请稍后重试' }, 502);
+      try { const uL = await readUser(env, me.name); if (uL) { uL.tv = tvNew; await writeUser(env, me.name, uL); } } catch (e) {}
       return json({ ok: true });
     }
 
@@ -413,8 +411,9 @@ async function apiBody(request, env, url) {
       return json({ idx: seasonIdx(), left: seasonLeft(), epoch: SEASON_EPOCH, ms: SEASON_MS, cardCost: CARD_COST });
     }
     if (path === '/api/best' && request.method === 'POST') {
-      /* 个人最佳上报限流: 一局结束最多报 1-2 次, 12次/分绰绰有余(原本完全无频控, 可无限重放) */
-      if (!rateLimit('bst:' + me.name, 12, 60000)) return json({ error: '上报过于频繁，请稍后再试' }, 429);
+      /* 个人最佳上报限流: 前端无限模式"每次涨分就上报"，客户端已节流(≥3秒一次) ⇒ 正常玩家 ≤20次/分，
+         这里给到 60次/分的余量, 只用来挡住脚本狂刷(原本完全无频控) */
+      if (!rateLimit('bst:' + me.name, 60, 60000)) return json({ error: '上报过于频繁，请稍后再试' }, 429);
       const v = String(body.variant || '');
       if (v !== 'endless' && v !== 'rush30') return json({ error: '无效' }, 400);
       /* 必须是 0..999999 的整数(999999 = /api/config 的 maxScore)。
@@ -652,6 +651,8 @@ async function apiBody(request, env, url) {
         if (!tp) return json({ error: '这个玩家不存在' }, 400);
         if (!canTouch(tp)) return json({ error: '无权操作该账号' }, 400);
         if (pass2.length < 6) return json({ error: '密码至少 6 位' }, 400);
+        /* 改密即吊销: tv+1 让改密前签发的所有令牌失效(否则改密对已窃令牌毫无意义) */
+        tp.tv = (tp.tv | 0) + 1;
         tp.salt = hex(crypto.getRandomValues(new Uint8Array(8)));
         tp.pass = await hashPass(pass2, tp.salt);
         await writeUser(env, uname, tp);

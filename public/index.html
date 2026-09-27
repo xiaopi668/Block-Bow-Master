@@ -205,7 +205,7 @@ kbd{background:#222;border:1px solid #666;border-bottom-width:3px;border-radius:
         var warn = document.getElementById('net-warn');
         if(location.protocol === 'file:' || typeof fetch === 'undefined'){
           warn.style.display = 'block';
-          warn.innerHTML = '⚠ 中心服务器版：请先运行 <b>node server.js</b>，再用浏览器打开 <b>http://localhost:3000</b><br>不能直接双击 html 文件（file:// 无法连接服务器）';
+          warn.innerHTML = '⚠ 本游戏需通过 Web 地址访问（不能直接双击 html 文件）<br>file:// 下无法连接 API，请用部署好的网址或本地 <b>wrangler dev</b> 打开';
         }
         var st = document.querySelector('#screen-login .subtitle');
         if(st){ var v = document.createElement('div'); v.style.cssText = 'font-size:10px;color:#888;margin-top:2px'; v.textContent = APP_VERSION + ' · 中心服务器版'; st.parentNode.insertBefore(v, st.nextSibling); }
@@ -628,8 +628,19 @@ function saveAuth(token, user){
 }
 function clearAuth(){ AUTH.token = null; AUTH.user = null; try{ localStorage.removeItem(TOKEN_KEY); }catch(e){} try{ sessionStorage.removeItem(TOKEN_KEY_TAB); }catch(e){} }
 
+/* 个人最佳上报: 无限模式"每次涨分就报", 服务端限流是 60次/分。
+   这里再客户端节流(≥3秒一次), 正常玩家最多 20次/分, 永远碰不到服务端阈值;
+   退出本局时 force=true 补报最终值, 保证不丢。.catch 兜住 Promise 拒绝(try/catch 抓不到异步错误) */
+let BEST_LAST = { endless: 0, rush30: 0 };
+function postBest(variant, score, force){
+  const now = Date.now();
+  if(!force && now - (BEST_LAST[variant] || 0) < 3000) return;
+  BEST_LAST[variant] = now;
+  try{ api('/api/best', { method:'POST', body:{ variant: variant, score: score } }).catch(function(){}); }catch(e){}
+}
+
 function dbLoad(){ return JSON.parse(JSON.stringify(USER_CACHE || {})); }
-function displayName(name){ return name === ADMIN_NAME ? '管理员' : name; }
+function displayName(name){ return (ADMIN_NAME && name === ADMIN_NAME) ? '管理员' : name; }   // ADMIN_NAME 未加载时是空串, 必须先判真避免误伤
 function canAdmin(name){
   if (AUTH.user && AUTH.user.username === name && (AUTH.user.isAdmin || AUTH.user.isDeveloper)) return true;
   const u = USER_CACHE[name]; return !!(u && (u.isAdmin || u.isDeveloper));
@@ -778,7 +789,7 @@ function tryRegister(){
   audio();
   const name = $('rg-name').value.trim(), p1 = $('rg-pass').value, p2 = $('rg-pass2').value;
   if(!name) return toast('请输入姓名（账号）', false);
-  if(name === ADMIN_NAME) return toast('该账号是管理员保留账号，不能注册', false);
+  if(ADMIN_NAME && name === ADMIN_NAME) return toast('该账号是管理员保留账号，不能注册', false);
   if(/[<>"\'\/\\]/.test(name)) return toast('姓名里不能包含特殊符号', false);
   if(p1.length < 6) return toast('密码至少 6 位', false);
   if(p1 !== p2) return toast('两次输入的密码不一致', false);
@@ -960,7 +971,7 @@ $('btn-admin-refresh').onclick = ()=>{ renderAdmin(); sfx('ui'); };
 $('btn-appoint').onclick = ()=>{
   const name = $('appoint-name').value.trim();
   if(!name) return toast('先输入玩家名称', false);
-  if(name === ADMIN_NAME) return toast('该账号本来就是超级管理员', false);
+  if(ADMIN_NAME && name === ADMIN_NAME) return toast('该账号本来就是超级管理员', false);
   adminOp('/api/admin/promote', {username:name}, `${name} 已被任命为管理员`);
   $('appoint-name').value = '';
   sfx('ui');
@@ -2011,6 +2022,8 @@ function bindInput(){
 }
 function isPaused(){ return $('pause-overlay').classList.contains('show'); }
 function exitGame(){
+  /* 退出本局: 无限模式的涨分上报是 3 秒节流的, 退出时把最终个人最佳补报一次(不丢) */
+  try{ if(G && G.best && (G.best.endless|0) > 0) postBest('endless', G.best.endless, true); }catch(e){}
   if(G){ G.active=false; G.running=false; }
   try{ clearSteves(); }catch(e){}
   cleanupNet();
@@ -2131,7 +2144,7 @@ function onHit(arrow, target, r){
       if(G.roundScore > ((G.best||{}).endless|0)){
         if(!G.best) G.best = {};
         G.best.endless = G.roundScore;
-        try { api('/api/best', { method:'POST', body:{ variant:'endless', score: G.roundScore } }); } catch(e){}
+        postBest('endless', G.roundScore, false);
       }
     }
     try{ api('/api/event/hit', { method:'POST', body:{ ring: ring }, skipAuth:true }); }catch(e){}
@@ -2205,7 +2218,7 @@ function loop(){
       G.rushEnded = true;
       var rs = G.roundScore|0;   // 本局得分（不含账号总积分）
       var best = (G.best||{}).rush30|0;
-      if(rs > best){ best = rs; try{ api('/api/best', { method:'POST', body:{ variant:'rush30', score: best } }); }catch(e){} }
+      if(rs > best){ best = rs; postBest('rush30', best, true); }   // 一局只报一次, 直接 force
       if(G.mode === 'multi'){
         banner('⏱ 时间到！', '本局 ' + rs + ' 分 · 结算见排行榜');
         showRushResult();   // 结算页: 全房玩家本局得分排名
@@ -2575,7 +2588,7 @@ async function applyCapeToSteve(steve, name){
   try{
     let data = CAPE_CACHE[name];
     if (data === undefined){
-      const r = await fetch('/api/cape/get?name=' + encodeURIComponent(name));
+      const r = await fetch('/api/cape/get?name=' + encodeURIComponent(name), { headers: { 'X-User-Token': (AUTH.token||'') } });   // 接口本就要求登录(与 skin/get 对齐)
       const d = await r.json();
       data = d.cape || null;
       if (data) CAPE_CACHE[name] = data;
@@ -2673,7 +2686,7 @@ function openSkinModal(){
         img.src = d.skin;
       }
     }).catch(e=>{});
-    fetch('/api/cape/get?name=' + encodeURIComponent(me)).then(r => r.json()).then(d => {
+    fetch('/api/cape/get?name=' + encodeURIComponent(me), { headers: { 'X-User-Token': (AUTH.token||'') } }).then(r => r.json()).then(d => {
       const ctx = $('cape-preview').getContext('2d');
       if (d.cape){
         const img = new Image();
