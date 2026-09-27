@@ -2,7 +2,7 @@
    账号数据: KV 按用户分键存储（纯 Worker+KV, 不消耗 DO 额度）
    多人房间: Durable Object 仅承载实时对局转发 */
 import { RoomDO } from './do.js';
-import { ADMIN_NAME, hex, hashPass, nameToId, getSecret, hmacSign, issueToken, userFromToken, pubUser, readUser, writeUser, delUser, flushDirty, dsGet, dsPut, dsPatch } from './auth.js';
+import { ADMIN_NAME, hex, hashPass, nameToId, getSecret, hmacSign, issueToken, userFromToken, pubUser, readUser, writeUser, delUser, flushDirty, dsGet, dsPut } from './auth.js';
 export { RoomDO };
 
 /* ---------------- 工具 ---------------- */
@@ -24,11 +24,21 @@ function rateLimit(key, max, windowMs) {
   if (arr.length >= max) { RL.set(key, { w: windowMs, t: arr }); return false; }
   arr.push(now);
   RL.set(key, { w: windowMs, t: arr });
-  if (RL.size > 4000) {   // 内存兜底: 清掉已过期的桶
+  if (RL.size > 4000) {   // 内存兜底: 清掉已过期的桶(桶结构 {w,t}, 只删最后一条已过期的)
     for (const [k, v] of RL) { if (!v.t.length || now - v.t[v.t.length - 1] > v.w) RL.delete(k); }
   }
   return true;
 }
+/* 只记"失败"的限流: 记一次并返回是否仍在配额内(用于登录, 防止被用来定向锁死账号) */
+function rlFail(key, max, windowMs) {
+  const now = Date.now();
+  const e = RL.get(key);
+  const arr = e ? e.t.filter(function (t) { return now - t < windowMs; }) : [];
+  arr.push(now);
+  RL.set(key, { w: windowMs, t: arr });
+  return arr.length <= max;
+}
+function rlClear(key) { RL.delete(key); }
 async function presenceList(env) {
   try {
     const stub = env.ROOM.get(env.ROOM.idFromName('bow-live5'));
@@ -124,7 +134,9 @@ async function apiBody(request, env, url) {
     const me0 = await userFromToken(env, token);
     let me = me0;
     const path = url.pathname;
-    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    /* 取客户端 IP(限流 key): CF 边缘头优先, 本地/自建反代回退 XFF 第一跳 */
+    const xff = request.headers.get('X-Forwarded-For') || '';
+    const ip = request.headers.get('CF-Connecting-IP') || (xff.split(',')[0] || '').trim() || 'unknown';
 
     /* 赛季懒结算: 下沉到数据服务做同步原子读改写(AI评审: 并发下不重复结算/不多扣卡) */
     if (me && (me.seasonIdx|0) !== seasonIdx()) {
@@ -178,7 +190,7 @@ async function apiBody(request, env, url) {
 
     /* ---- 认证 ---- */
     if (path === '/api/register' && request.method === 'POST') {
-      if (!rateLimit('rg:' + ip, 5, 600000)) return json({ error: '注册太频繁了，请 10 分钟后再试' }, 429);
+      if (!rateLimit('rg:' + ip, 8, 600000)) return json({ error: '注册太频繁了，请 10 分钟后再试' }, 429);
       const name = String(body.username || '').trim();
       const pass = String(body.password || '');
       if (!name) return json({ error: '请输入姓名（账号）' }, 400);
@@ -199,8 +211,7 @@ async function apiBody(request, env, url) {
       try {
         const name = String(body.username || '').trim();
         const pass = String(body.password || '');
-        /* 按账号限速: 阻止单账号被定向撞库(与 IP 限速叠加) */
-        if (name && !rateLimit('lgn:' + name.toLowerCase(), 8, 300000)) return json({ error: '该账号尝试过多，请 5 分钟后再试' }, 429);
+        const lgnKey = 'lgn:' + name.toLowerCase();   // 账号级桶: 只记密码错误(见下), 不预检
         let u = await readUser(env, name);
         if (!u) {
           /* KV 副本可能滞后: 回源 DO 查询 */
@@ -220,7 +231,12 @@ async function apiBody(request, env, url) {
           await writeUser(env, name, u);
           return json({ token: await issueToken(env, name), user: pubUser({ ...u, _name: name }) });
         }
-        if (await hashPass(pass, u.salt) !== u.pass) return json({ error: '密码错误！' }, 400);
+        if (await hashPass(pass, u.salt) !== u.pass) {
+          /* 账号级限速只统计密码错误(8次/5分): 正确密码永远能进, 防止被人拿错误密码定向锁死账号(含管理员) */
+          const over = name && !rlFail(lgnKey, 8, 300000);
+          return json({ error: over ? '该账号尝试过多，请 5 分钟后再试' : '密码错误！' }, over ? 429 : 400);
+        }
+        rlClear(lgnKey);   // 登录成功: 清掉该账号的失败计数
         if (u.banned) return json({ error: 'banned' }, 403);
         u.lastLogin = Date.now();
         await writeUser(env, name, u);
@@ -237,8 +253,8 @@ async function apiBody(request, env, url) {
       return json({ user: pubUser({ ...me, _name: me.name, _online: online }) });
     }
     if (path === '/api/score' && request.method === 'POST') {
-      /* 记分限流: 单账号 10 秒内最多 60 次上报(正常命中远低于此), 挡住脚本刷分(P0) */
-      if (!rateLimit('sc:' + me.name, 60, 10000)) return json({ error: '得分上报太频繁，请稍后再试', score: 0 }, 429);
+      /* 记分限流: 单账号 10 秒内最多 90 次上报(留足分裂箭散射3支+狂射模式的余量), 挡住脚本刷分(P0) */
+      if (!rateLimit('sc:' + me.name, 90, 10000)) return json({ error: '得分上报太频繁，请稍后再试', score: 0 }, 429);
       /* 记分下沉到数据服务原子操作(AI评审): 服务端校验反作弊并同步读改写 */
       let d2 = null;
       try { const r2 = await dsFetch(env, '/score/' + encodeURIComponent('u:' + me.name), 'POST', body); d2 = await r2.json(); } catch (e) { d2 = null; }   // 非JSON响应兜底(AI评审)
@@ -484,6 +500,7 @@ async function apiBody(request, env, url) {
 
       /* 救援迁移: 只读导出 DO state.storage 里的旧账号库 */
       if (path === '/api/admin/do-db' && request.method === 'GET') {
+        if (!env.AI_PROXY_TOKEN) return json({ error: '服务未配置(AI_PROXY_TOKEN)' }, 503);   // secret 缺失先硬失败, 避免拿到 403 纯文本后 JSON 解析炸成 500
         try {
           const stub = env.ROOM.get(env.ROOM.idFromName('bow-live5'));
           const r = await stub.fetch('https://do/db-dump', { headers: { 'X-Internal-Token': (env.AI_PROXY_TOKEN || '') } });
@@ -564,33 +581,22 @@ async function apiBody(request, env, url) {
       if (path === '/api/admin/score') {
         const d2 = Math.max(-500, Math.min(500, body.delta | 0));
         if (body.zero) {
-          /* 全体清零: 主存(数据服务 __index)优先, PATCH 只改 score 字段; 数据服务不可用时回退 KV 读改写。
+          /* 全体清零: 一条指令下沉到数据服务原子执行(服务端遍历账号、跳过开发者)。
              (修复 P0: 原实现 cursor 未声明, ES Module 严格模式直接 ReferenceError → 该接口必定 500;
-              且原实现只遍历 KV 的 u: 键, 早已迁到数据服务的账号一个都清不到) */
-          const allZero = await listAllUsers(env);
-          const namesZero = Object.keys(allZero);
-          var zeroed = 0;
-          for (var zi = 0; zi < namesZero.length; zi++) {
-            var zn = namesZero[zi];
-            if (isDev(allZero[zn])) continue;   // 开发者账号保持不动(与原逻辑一致)
-            var zok = false;
-            try { zok = await dsPatch(env, zn, { score: 0 }); } catch (e) { zok = false; }
-            if (zok) { zeroed++; continue; }
-            var zu = await readUser(env, zn);
-            if (zu && !isDev(zu)) { zu.score = 0; await writeUser(env, zn, zu); zeroed++; }
-          }
-          return json({ ok: true, zeroed: zeroed, total: namesZero.length });
+              且原实现只遍历 KV 的 u: 键, 早已迁到数据服务的账号一个都清不到。
+              也不再做"KV 读改写回退" —— writeUser 只进 dirty 队列, 最终 flushDirty 是整条回写,
+              拿迁移期冻结的 KV 快照覆盖线上账号属于数据丢失风险, 数据服务不可用时宁可报错重试) */
+          let dZ = null;
+          try { const rZ = await dsFetch(env, '/scorezero', 'POST', {}); dZ = await rZ.json(); } catch (e) { dZ = null; }
+          if (dZ && dZ.ok) return json({ ok: true, zeroed: dZ.changed|0, total: dZ.total|0, skippedDev: dZ.skippedDev|0 });
+          return json({ error: '数据服务暂时不可用，清零未执行（可稍后重试）' }, 502);
         }
         if (body.all) {
-          /* 全体加分: 用 __index 的名字+当前分, PATCH 只改 score 字段(不读不写整记录) */
-          const allAdj = await listAllUsers(env);
-          for (var nm2 in allAdj) {
-            var au = allAdj[nm2] || {};
-            if (au.isDeveloper) continue;
-            var ns = Math.max(0, (au.score | 0) + d2);
-            try { await dsPatch(env, nm2, { score: ns }); } catch (e) {}
-          }
-          return json({ ok: true });
+          /* 全体加分: 同样下沉为数据服务一条原子指令(避免逐用户发 N 个 PATCH 撞子请求上限) */
+          let dA = null;
+          try { const rA = await dsFetch(env, '/scoreadj', 'POST', { delta: d2 }); dA = await rA.json(); } catch (e) { dA = null; }
+          if (dA && dA.ok) return json({ ok: true, adjusted: dA.changed|0, total: dA.total|0, skippedDev: dA.skippedDev|0 });
+          return json({ error: '数据服务暂时不可用，加分未执行（可稍后重试）' }, 502);
         }
         var tsu = await readUser(env, uname);
         if (!tsu) return json({ error: '这个玩家不存在' }, 400);
