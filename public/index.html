@@ -1036,8 +1036,15 @@ $('li-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') tryLogin(); })
 $('btn-to-register').onclick = ()=>{ show('screen-register'); sfx('ui'); };
 $('btn-back-login').onclick = ()=>{ show('screen-login'); sfx('ui'); };
 $('btn-register').onclick = tryRegister;
-$('btn-logout').onclick = ()=>{
-  try{ api('/api/logout', { method:'POST', skipAuth:true }); }catch(e){}
+$('btn-logout').onclick = async ()=>{
+  /* 登出失败(502/网络)必须让用户看见: 服务端未吊销令牌时本地先清掉会让用户误以为已安全退出(二审必改②) */
+  var btn = $('btn-logout'); btn.disabled = true;
+  var ok = false;
+  for (var i = 0; i < 2 && !ok; i++){
+    try{ await api('/api/logout', { method:'POST', skipAuth:true }); ok = true; }catch(e){}
+  }
+  btn.disabled = false;
+  if (!ok){ sfx('ui'); toast('退出失败：服务器未确认吊销，请重试'); return; }
   try{ closeFriendWs(); }catch(e){}
   clearAuth(); clearSession();
   show('screen-login'); sfx('ui'); toast('已退出登录');

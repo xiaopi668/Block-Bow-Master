@@ -310,6 +310,10 @@ const server = http.createServer((req, res) => {
     req.on('data', (c) => { body += c; if (body.length > 100000) req.destroy(); });
     req.on('end', () => {
       fs.readFile(file, 'utf8', (err, old) => {
+        /* 文件不存在一律 404: PATCH 语义是"改已有记录", 否则会凭空写出只有 {tv} 的残缺文件,
+           遮蔽 KV 里的老账号 → 该账号数据被读成空壳, 任何密码都能认领(二审建议⑦) */
+        if (err && err.code === 'ENOENT') { res.writeHead(404); res.end('not found'); return; }
+        if (err) { res.writeHead(500); res.end('err'); return; }
         let obj = {};
         try { obj = JSON.parse(old || '{}'); } catch (e) { obj = {}; }
         let patch = {};
