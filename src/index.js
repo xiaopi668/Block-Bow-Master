@@ -108,7 +108,9 @@ async function getFlinks(env) {
     const s = await env.BOW_KV.get(FLINK_KEY);
     if (s) {
       const a = JSON.parse(s);
-      if (Array.isArray(a)) return a.filter(function (x) { return x && typeof x.name === 'string' && typeof x.url === 'string'; });
+      if (Array.isArray(a)) return a
+        .filter(function (x) { return x && typeof x.name === 'string' && typeof x.url === 'string'; })
+        .map(function (x) { return { name: x.name, url: x.url }; });   // 字段白名单: KV 里多塞的字段一律不下发
     }
   } catch (e) {}
   return [];
@@ -622,7 +624,10 @@ async function apiBody(request, env, url) {
       /* 友情链接管理(仅开发者): 增删页脚外链; 普通管理员只能看不能改 */
       if (path === '/api/admin/friendlinks' && request.method === 'POST') {
         if (!meIsDev) return json({ error: '需要开发者权限' }, 403);
-        if (!rateLimit('fla:' + ip, 60, 60000)) return json({ error: '操作太频繁，请稍后再试' }, 429);
+        /* 键按账号(与 sc:/ach:/bst: 一致, 不按 IP: 同出口 IP 不连坐, 换 IP 也绕不过);
+           分钟闸挡脚本连点, 日闸兜住 KV 免费写额度(1000次/天, 这里留 100 次) */
+        if (!rateLimit('flam:' + me.name, 30, 60000)) return json({ error: '操作太频繁，请稍后再试' }, 429);
+        if (!rateLimit('flad:' + me.name, 100, 86400000)) return json({ error: '今日友情链接修改次数已达上限' }, 429);
         const op = String(body.op || '');
         const links = await getFlinks(env);
         if (op === 'add') {
