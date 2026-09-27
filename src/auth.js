@@ -49,10 +49,11 @@ async function getSecret(env) {
   /* 确定性密钥: 由 SECRET_PEPPER 推导, Worker 与 DO 各自本地计算, 永远一致(不再经 KV 分发) */
   return await sha1Hex((env.SECRET_PEPPER || 'bow-fallback-v2') + '|bow-master|v1') + sha256Hex((env.SECRET_PEPPER || 'bow-fallback-v2') + '|bow-master|v1');
 }
-async function issueToken(env, name) {
+async function issueToken(env, name, tv) {
   const sec = await getSecret(env);
   const userId = await nameToId(name);
-  const payload = b64u(enc.encode(JSON.stringify({ userId, name, exp: Date.now() + TOKEN_TTL })));
+  /* v = 账号令牌版本: 登出/改密时账号上的 tv +1, 旧令牌立即全部失效(渗透#6) */
+  const payload = b64u(enc.encode(JSON.stringify({ userId, name, exp: Date.now() + TOKEN_TTL, v: (tv | 0) })));
   return payload + '.' + await hmacSign(sec, payload);
 }
 async function userFromToken(env, token) {
@@ -70,6 +71,7 @@ async function userFromToken(env, token) {
     const rec = await readUser(env, p.name);
     if (!rec) return null;
     if (rec.banned) return null;
+    if ((p.v | 0) !== (rec.tv | 0)) return null;   // 版本不匹配 = 该令牌已被吊销(登出/改密)
     return { name: p.name, ...rec };
   } catch (e) { return null; }
 }

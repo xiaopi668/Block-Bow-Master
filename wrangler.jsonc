@@ -8,7 +8,10 @@
   ],
   "assets": {
     "directory": "./public",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    // 资源也先过 Worker: 否则静态文件由平台直接下发, Worker 加的安全响应头/强制HTTPS对
+    // index.html 一概不生效(渗透#8)。代价是静态请求也计入 Workers 每日请求配额
+    "run_worker_first": true
   },
   "kv_namespaces": [
     {

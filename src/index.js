@@ -2,14 +2,14 @@
    账号数据: KV 按用户分键存储（纯 Worker+KV, 不消耗 DO 额度）
    多人房间: Durable Object 仅承载实时对局转发 */
 import { RoomDO } from './do.js';
-import { ADMIN_NAME, hex, hashPass, nameToId, getSecret, hmacSign, issueToken, userFromToken, pubUser, readUser, writeUser, delUser, flushDirty, dsGet, dsPut } from './auth.js';
+import { ADMIN_NAME, hex, hashPass, nameToId, getSecret, hmacSign, issueToken, userFromToken, pubUser, readUser, writeUser, delUser, flushDirty, dsGet, dsPut, dsPatch } from './auth.js';
 export { RoomDO };
 
 /* ---------------- 工具 ---------------- */
 function json(data, code = 200) {
   return new Response(JSON.stringify(data), {
     status: code,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' },
   });
 }
 async function readBody(request) {
@@ -92,6 +92,41 @@ const ADMIN_API = ['/api/admin/'];
 const AUTH_API = ['/api/me', '/api/logout', '/api/online', '/api/users/public', '/api/score', '/api/settings/title', '/api/leaderboard'];
 let LB_CACHE = null, LB_CACHE_T = 0;
 const SP_TYPES = { track: 8, split: 5, ice: 3, boom: 8, shadow: 10 };
+/* 经济类接口统一 count 校验(渗透#4/#5/#10): 必须是 [min,max] 内的整数, 缺省取 def; 非法一律 null → 上层 400。
+   原本是 Math.max/min 静默归一(count=-999999 也按 1 结算), 看着"能用"实则掩盖客户端 bug 与恶意输入 */
+function intCount(v, def, min, max) {
+  if (v === undefined || v === null || v === '') v = def;
+  return (typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max) ? v : null;
+}
+/* ===== 成就服务端白名单与达成条件(渗透#2) =====
+   原本客户端报什么 id 就解锁什么: 可一次拿到全部成就, 还能写入任意伪造 id */
+const ACH_IDS = ['first-hit', 'combo-5', 'combo-10', 'perfect-round', 'round-100', 'round-300', 'round-500',
+  'rush-200', 'rush-400', 'endless-300', 'endless-600', 'precision-100', 'precision-200',
+  'billion-1', 'anticard-1', 'rank-diamond', 'rank-king'];
+/* false = 服务端判定未达成, 忽略该 id。连击/百发百中这类只在对局内的遥测服务端无从核验,
+   只做白名单放行 —— 成就不发任何奖励, 伪造它拿不到实际收益 */
+function achMet(id, u) {
+  const best = u.best || {};
+  const top = Math.max(best.endless | 0, best.rush30 | 0);
+  const sc = u.score | 0;
+  switch (id) {
+    case 'rank-diamond': return sc >= 60000;
+    case 'rank-king': return sc >= 400000;
+    case 'rush-200': return (best.rush30 | 0) >= 600;
+    case 'rush-400': return (best.rush30 | 0) >= 1500;
+    case 'endless-300': return (best.endless | 0) >= 1200;
+    case 'endless-600': return (best.endless | 0) >= 3000;
+    /* 单局分必然 <= 累计分, 用它当"成立条件"不会误伤正常玩家 */
+    case 'round-100': return sc >= 1000 || top >= 1000;
+    case 'round-300': return sc >= 3000 || top >= 3000;
+    case 'round-500': return sc >= 10000 || top >= 10000;
+    case 'precision-100': return sc >= 300 || top >= 300;
+    case 'precision-200': return sc >= 800 || top >= 800;
+    case 'anticard-1': return (u.anticard | 0) >= 1;
+    case 'billion-1': { const sp = u.sp || {}; let t = 0; for (const k in sp) t += sp[k] | 0; return t >= 1; }
+    default: return true;
+  }
+}
 /* ===== 赛季系统: 每7天自动换赛季; 切换时积分/箭矢/特殊箭清零(🛡️防丢卡可保护) ===== */
 const SEASON_EPOCH = Date.UTC(2026, 8, 21, 0, 0, 0);   // 2026-09-21 00:00 UTC 第1赛季开启
 const SEASON_MS = 7 * 24 * 3600 * 1000;
@@ -103,6 +138,11 @@ function seasonLeft(){ const n = Date.now(); if (n < SEASON_EPOCH) return SEASON
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    /* 明文 HTTP 一律跳 HTTPS: X-User-Token 是明文令牌, 不能走明文通道(渗透#8)。
+       本地 wrangler dev 只有 http, 放行 127./localhost, 否则本地调试会被自己重定向 */
+    const isLocal = url.hostname === 'localhost' || url.hostname === '[::1]' || url.hostname.indexOf('127.') === 0;
+    if (url.protocol === 'http:' && !isLocal) return Response.redirect('https://' + url.host + url.pathname + url.search, 301);
 
     /* WebSocket upgrade -> Durable Object（原样转发, DO 自行验签） */
     if (url.pathname === '/ws' && request.headers.get('Upgrade') === 'websocket') {
@@ -116,6 +156,13 @@ export default {
         const h = new Headers(res.headers);
         h.set('Cache-Control', 'private, no-store, max-age=0');
         h.set('CDN-Cache-Control', 'no-store');
+        /* 安全响应头(渗透#8): 全站原本一个都没有 */
+        h.set('X-Content-Type-Options', 'nosniff');
+        h.set('X-Frame-Options', 'SAMEORIGIN');           // 登录页不得被外部 iframe 嵌套(点击劫持)
+        h.set('Content-Security-Policy', "frame-ancestors 'none'");   // 只管 frame, 不碰内联脚本, 零兼容风险
+        h.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        h.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+        h.set('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
         return new Response(res.body, { status: res.status, headers: h });
       } catch (e) { return new Response('not found', { status: 404 }); }
     }
@@ -180,6 +227,10 @@ async function apiBody(request, env, url) {
       } catch (e) { return json({ error: String(e && e.stack || e).slice(0, 300) }, 500); }
     }
     if (path === '/api/skin/get' && request.method === 'GET') {
+      /* 需登录(渗透#7): 原本在鉴权闸之前, 任何人可批量探测账号存在性/下载任意玩家皮肤;
+         同作用域的 /api/cape/get 本来就要求登录, 属鉴权不一致 */
+      if (!me) return json({ error: '未登录或登录已过期' }, 401);
+      if (!rateLimit('skin:' + ip, 60, 60000)) return json({ error: '请求过于频繁，请稍后再试' }, 429);
       const nm = String(url.searchParams.get('name') || '').slice(0, 16);
       const u = await readUser(env, nm);
       return json({ skin: (u && u.skin) || null });
@@ -204,7 +255,7 @@ async function apiBody(request, env, url) {
       const rec = { salt, pass: await hashPass(pass, salt), score: 0, arrows: 100, banned: false, isAdmin: false, isDeveloper: false, reg: Date.now(), lastLogin: 0, sp: {}, friends: [], requests: [], sent: [], dm: [], seasonIdx: seasonIdx(), anticard: 0, ach: [] };
       await writeUser(env, name, rec);
       const u = { ...rec, _name: name };
-      return json({ token: await issueToken(env, name), user: pubUser(u) });
+      return json({ token: await issueToken(env, name, 0), user: pubUser(u) });
     }
     if (path === '/api/login' && request.method === 'POST') {
       if (!rateLimit('lgi:' + ip, 10, 300000)) return json({ error: '登录太频繁了，请 5 分钟后再试' }, 429);
@@ -221,7 +272,7 @@ async function apiBody(request, env, url) {
             if (rr.ok) { const d = await rr.json(); if (d.name && d.user) u = d.user; }
           } catch (e) {}
         }
-        if (!u) return json({ error: '账号不存在，请先注册' }, 400);
+        if (!u) return json({ error: '账号或密码错误！' }, 400);   // 统一文案: 消除用户名枚举(渗透#3)
         if (!u.salt && !u.pass) {
           /* 自动建档账号（无密码）首次登录即认领: 设置密码 */
           if (pass.length < 6) return json({ error: '密码至少 6 位' }, 400);
@@ -229,28 +280,37 @@ async function apiBody(request, env, url) {
           u.salt = csalt;
           u.pass = await hashPass(pass, csalt);
           await writeUser(env, name, u);
-          return json({ token: await issueToken(env, name), user: pubUser({ ...u, _name: name }) });
+          return json({ token: await issueToken(env, name, u.tv), user: pubUser({ ...u, _name: name }) });
         }
         if (await hashPass(pass, u.salt) !== u.pass) {
           /* 账号级限速只统计密码错误(8次/5分): 正确密码永远能进, 防止被人拿错误密码定向锁死账号(含管理员) */
           const over = name && !rlFail(lgnKey, 8, 300000);
-          return json({ error: over ? '该账号尝试过多，请 5 分钟后再试' : '密码错误！' }, over ? 429 : 400);
+          return json({ error: over ? '该账号尝试过多，请 5 分钟后再试' : '账号或密码错误！' }, over ? 429 : 400);   // 与"账号不存在"同文案, 消除枚举(渗透#3)
         }
         rlClear(lgnKey);   // 登录成功: 清掉该账号的失败计数
         if (u.banned) return json({ error: 'banned' }, 403);
         u.lastLogin = Date.now();
         await writeUser(env, name, u);
-        return json({ token: await issueToken(env, name), user: pubUser({ ...u, _name: name }) });
+        return json({ token: await issueToken(env, name, u.tv), user: pubUser({ ...u, _name: name }) });
       } catch (e) { return json({ error: 'SRV ' + (e.message || String(e)) + ' :: ' + String(e.stack || '').slice(0, 400) }, 500); }
     }
 
     if (!me) return json({ error: '未登录或登录已过期' }, 401);
-    if (path === '/api/logout' && request.method === 'POST') return json({ ok: true });
+    if (path === '/api/logout' && request.method === 'POST') {
+      /* 吊销令牌(渗透#6): 账号版本号 tv +1, 该账号所有已签发令牌立即失效(含刚登出的这张、
+         以及被偷走的旧令牌)。令牌里带 v, 下次签发用最新 tv */
+      try {
+        const uL = await readUser(env, me.name);
+        if (uL) { uL.tv = (uL.tv | 0) + 1; await writeUser(env, me.name, uL); }
+      } catch (e) {}
+      return json({ ok: true });
+    }
 
     /* ---- 已登录: 账号数据（全部走按用户 KV, 零 DO 消耗） ---- */
     if (path === '/api/me' && request.method === 'GET') {
       const online = (await presenceList(env)).includes(me.name);
-      return json({ user: pubUser({ ...me, _name: me.name, _online: online }) });
+      /* hideNames: 让前端在运行时才知道要隐藏/特殊显示的账号名, 不再把最高权限账号名硬编码进客户端(渗透#3) */
+      return json({ user: pubUser({ ...me, _name: me.name, _online: online }), hideNames: [ADMIN_NAME] });
     }
     if (path === '/api/score' && request.method === 'POST') {
       /* 记分限流: 单账号 10 秒内最多 90 次上报(留足分裂箭散射3支+狂射模式的余量), 挡住脚本刷分(P0) */
@@ -264,14 +324,16 @@ async function apiBody(request, env, url) {
     }
     if (path === '/api/arrow/use' && request.method === 'POST') {
       /* 扣箭下沉为数据服务原子操作(AI评审双存储一致性问题): 整条记录回写会互相覆盖分数 */
-      const n = Math.max(1, Math.min(10, (body.count | 0) || 1));
+      const n = intCount(body.count, 1, 1, 10);   // 渗透#10: 非法值不再按 1 静默结算
+      if (n === null) return json({ error: '数量无效' }, 400);
       const rA = await dsFetch(env, '/arrowuse/' + encodeURIComponent('u:' + me.name), 'POST', { count: n });
       const dA = await rA.json();
       if (dA.ok) return json({ arrows: dA.arrows|0 });
       return json({ error: '服务暂时不可用，请稍后再试' }, 502);
     }
     if (path === '/api/shop/buy' && request.method === 'POST') {
-      const count = Math.max(1, Math.min(10000, Math.floor(Number(body.count) || 0)));
+      const count = intCount(body.count, 1, 1, 10000);   // 渗透#4
+      if (count === null) return json({ error: '数量无效' }, 400);
       const u = await readUser(env, me.name);
       if (!u) return json({ error: '账号不存在' }, 400);
       const cost = count;
@@ -282,10 +344,14 @@ async function apiBody(request, env, url) {
       return json({ score: u.score|0, arrows: u.arrows|0 });
     }
     if ((path === '/api/sp/buy' || path === '/api/sp/use') && request.method === 'POST') {
-      const type = String(body.type || '');
-      if (!SP_TYPES[type]) return json({ error: '未知箭种' }, 400);
+      const rawT = body.type;
+      /* 必须是字符串: String(['track']) === 'track', 数组/对象会被隐式转换成合法箭种(渗透#4) */
+      if (typeof rawT !== 'string' || !SP_TYPES[rawT]) return json({ error: '未知箭种' }, 400);
+      const type = rawT;
+      const spCnt = intCount(body.count, 1, 1, 50);   // 渗透#4
+      if (spCnt === null) return json({ error: '数量无效' }, 400);
       /* 特殊箭购买/消耗也下沉为数据服务原子操作(AI评审双存储一致性) */
-      const rB = await dsFetch(env, (path === '/api/sp/buy' ? '/spbuy/' : '/spuse/') + encodeURIComponent('u:' + me.name), 'POST', { type: type, count: (body.count | 0) || 1 });
+      const rB = await dsFetch(env, (path === '/api/sp/buy' ? '/spbuy/' : '/spuse/') + encodeURIComponent('u:' + me.name), 'POST', { type: type, count: spCnt });
       const dB = await rB.json();
       if (dB.ok) return json({ ok: true, score: dB.score|0, left: dB.left|0 });
       return json({ error: dB.error || '服务暂时不可用', left: (dB.left|0) || 0 }, 400);
@@ -297,9 +363,12 @@ async function apiBody(request, env, url) {
       return json({ error: (d3 && d3.error) || '购买服务暂时不可用，请稍后再试', score: d3 ? (d3.score|0) : 0 }, 400);
     }
     if (path === '/api/ach/unlock' && request.method === 'POST') {
+      if (!rateLimit('ach:' + me.name, 30, 60000)) return json({ error: '操作过于频繁，请稍后再试' }, 429);
       /* 上游也做长度/字符校验(AI评审), 与数据层正则清洗双保险 */
       const achId = String(body.id || '').slice(0, 24).replace(/[^a-zA-Z0-9_-]/g, '');
       if (!achId) return json({ error: '参数错误' }, 400);
+      if (ACH_IDS.indexOf(achId) < 0) return json({ error: '无效成就' }, 400);      // 白名单(渗透#2)
+      if (!achMet(achId, me)) return json({ ok: true, unlocked: false, ach: me.ach || [] });   // 未达成 → 静默忽略
       const r5 = await dsFetch(env, '/ach/' + encodeURIComponent('u:' + me.name), 'POST', { id: achId });
       let d5 = null;
       try { d5 = await r5.json(); } catch (e) { d5 = null; }
@@ -307,7 +376,10 @@ async function apiBody(request, env, url) {
       return json({ error: '服务暂时不可用' }, 502);
     }
     if (path === '/api/ach/unlock-batch' && request.method === 'POST') {
-      const ids = Array.isArray(body.ids) ? body.ids.slice(0, 20).map(function(x){ return String(x || '').slice(0, 24).replace(/[^a-zA-Z0-9_-]/g, ''); }).filter(Boolean) : [];
+      if (!rateLimit('ach:' + me.name, 30, 60000)) return json({ error: '操作过于频繁，请稍后再试' }, 429);
+      /* 白名单 + 达成条件双重过滤(渗透#2): 伪造 id、未达成的 id 直接被丢弃 */
+      const ids = (Array.isArray(body.ids) ? body.ids.slice(0, 20).map(function(x){ return String(x || '').slice(0, 24).replace(/[^a-zA-Z0-9_-]/g, ''); }).filter(Boolean) : [])
+        .filter(function(x){ return ACH_IDS.indexOf(x) >= 0 && achMet(x, me); });
       if (!ids.length) return json({ ok: true, unlockedAny: false, ach: (me.ach || []) });
       let cur = (me.ach || []);
       let anyNew = false;
@@ -341,9 +413,15 @@ async function apiBody(request, env, url) {
       return json({ idx: seasonIdx(), left: seasonLeft(), epoch: SEASON_EPOCH, ms: SEASON_MS, cardCost: CARD_COST });
     }
     if (path === '/api/best' && request.method === 'POST') {
+      /* 个人最佳上报限流: 一局结束最多报 1-2 次, 12次/分绰绰有余(原本完全无频控, 可无限重放) */
+      if (!rateLimit('bst:' + me.name, 12, 60000)) return json({ error: '上报过于频繁，请稍后再试' }, 429);
       const v = String(body.variant || '');
       if (v !== 'endless' && v !== 'rush30') return json({ error: '无效' }, 400);
-      const s = Math.max(0, body.score | 0);
+      /* 必须是 0..999999 的整数(999999 = /api/config 的 maxScore)。
+         原本 body.score|0 直接放行到 INT32_MAX: 1 次请求即可把 best 刷成 2147483647(渗透#1 HIGH) */
+      const rawB = body.score;
+      if (typeof rawB !== 'number' || !Number.isFinite(rawB) || Math.floor(rawB) !== rawB || rawB < 0 || rawB > 999999) return json({ error: '数据异常' }, 400);
+      const s = rawB;
       const u = await readUser(env, me.name);
       if (!u) return json({ error: '账号不存在' }, 400);
       if (!u.best) u.best = {};
@@ -459,7 +537,8 @@ async function apiBody(request, env, url) {
     }
     if (path === '/api/friend/gift' && request.method === 'POST') {
       const other = String(body.to || '').slice(0, 16);
-      const cnt = Math.max(1, Math.min(100, body.count | 0));
+      const cnt = intCount(body.count, 1, 1, 100);   // 渗透#5: 负数/小数/超上限一律拒(原本 -1 也按 1 结算)
+      if (cnt === null) return json({ error: '数量无效' }, 400);
       const u = await readUser(env, me.name);
       if (!u) return json({ error: '账号不存在' }, 400);
       if (other === me.name) return json({ error: '不能送给自己' }, 400);
@@ -601,9 +680,13 @@ async function apiBody(request, env, url) {
         var tsu = await readUser(env, uname);
         if (!tsu) return json({ error: '这个玩家不存在' }, 400);
         if (!canTouch(tsu)) return json({ error: '无权操作该账号' }, 400);
-        tsu.score = Math.max(0, (tsu.score||0) + d2);
-        await writeUser(env, uname, tsu);
-        return json({ ok: true, score: tsu.score });
+        const newS = Math.max(0, (tsu.score | 0) + d2);
+        /* 只 PATCH score 字段(评审C): 原本 readUser→writeUser 整条回写, 会拿 5 秒缓存快照
+           覆盖并发写入的分数/私信/皮肤等其它字段 */
+        const okS = await dsPatch(env, uname, { score: newS });
+        if (!okS) return json({ error: '数据服务暂时不可用，未改动（可稍后重试）' }, 502);
+        tsu.score = newS;
+        return json({ ok: true, score: newS });
       }
       return json({ error: 'not found' }, 404);
     }

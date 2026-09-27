@@ -269,7 +269,7 @@ kbd{background:#222;border:1px solid #666;border-bottom-width:3px;border-radius:
     <h1 data-page-node-id="a1t7Kv0BTiARdcQbk399K3" class="game-title" style="font-size:24px"><!--pnid:IInNdA0vJVZFiiRV3UsRCQ-->玩 家 管 理</h1>
     <div data-page-node-id="cYOngCsenWSpLDfv31rD0A" class="note" id="admin-store"><!--pnid:MmtZuC9XO5wu8aySwifixO-->已注册玩家：0 人</div>
     <div data-page-node-id="666SSr1J1b66LhKIQlaH4M" class="note" style="color:#9bc8ff"><!--pnid:Ug3XFAGnRMvBWHG529m8uQ-->实时监控：任何玩家注册 / 登录 / 得分变化，这里都会<b data-page-node-id="a5ihcYpLuiAKYlnJKxhF8I" style="color:#7ee37e"><!--pnid:EUfSStsuI94ZDNQ1v59owb-->自动更新</b><!--pnid:jN501T7qHUH0PsF3RoMIcg-->，不用刷新（需在同一个浏览器里打开本文件）</div>
-    <div data-page-node-id="0fM5yxarmnQoqOMkKG35WN" class="note"><!--pnid:vTxLNoTc6bHPXHlTbizmHa-->管理员：为啥全部姓名都在 ｜ 可加分 / 减分 / 封禁（封禁后登录直接闪退）/ 删除 ｜ <b data-page-node-id="YI5icRKjXE01C16Iev8ni8" style="color:#ffd83d"><!--pnid:6mIZKW1oyKwSvjBnjh5j0H-->任命/取消管理员只有超级管理员可用</b></div>
+    <div data-page-node-id="0fM5yxarmnQoqOMkKG35WN" class="note"><!--pnid:vTxLNoTc6bHPXHlTbizmHa-->管理员：内置超级管理员 ｜ 可加分 / 减分 / 封禁（封禁后登录直接闪退）/ 删除 ｜ <b data-page-node-id="YI5icRKjXE01C16Iev8ni8" style="color:#ffd83d"><!--pnid:6mIZKW1oyKwSvjBnjh5j0H-->任命/取消管理员只有超级管理员可用</b></div>
     <div data-page-node-id="8IH0HbyZrqN4IeV3UxRnEg" class="row" id="appoint-row" style="width:100%; justify-content:flex-start">
       <input data-page-node-id="YdZs4K4JQD50P100h0zGzG" autocomplete="off" class="mc-input" id="appoint-name" maxlength="16" placeholder="输入玩家名称" style="flex:1; min-width:140px">
       <button data-page-node-id="PF83lBrL22sMtILNhMlpJg" class="mc-btn small green" id="btn-appoint" style="min-width:110px"><!--pnid:0Z4thrYZHD2fyvkTk7q1vP-->设为管理员</button>
@@ -549,7 +549,7 @@ document.addEventListener('DOMContentLoaded', function(){
    方块弓箭大师 v4.0 · 中心服务器版
    功能：token账号 · 三级权限(玩家/管理员/开发者) · 好友系统(最多200人)
          加减分/封禁闪退/删除 · WebSocket中心服务器联机(2人) · 3D站桩射箭
-   依赖: node server.js (后端见 bow-server/server.js)
+   依赖: Cloudflare Worker API + 数据服务(结构见仓库 src/ 与 scripts/)
    ============================================================ */
 const $ = id => document.getElementById(id);
 const NOW = () => performance.now() / 1000;
@@ -589,7 +589,7 @@ function sfx(type){
 }
 
 /* ---------- 账号系统 v4：中心服务器 + token（localStorage 只存 token） ---------- */
-const ADMIN_NAME = '为啥全部姓名都在';   // 服务器保留的开发者账号
+let ADMIN_NAME = '';   // 保留开发者账号名: 由服务端 /api/me 的 hideNames 下发, 客户端不再写死(渗透#3)
 const TOKEN_KEY = 'mcBow_token_v4';
 const TOKEN_KEY_TAB = 'mcBow_token_tab';   // 每标签独立会话: 多标签可登录不同账号
 let AUTH = { token: (function(){ try{ return sessionStorage.getItem(TOKEN_KEY_TAB) || localStorage.getItem(TOKEN_KEY); }catch(e){ return null; } })(), user: null };
@@ -615,6 +615,8 @@ async function api(path, opts = {}) {
     if (curScreen !== 'screen-login' && curScreen !== 'screen-register' && curScreen !== 'screen-game') show('screen-login');
   }
   if (!res.ok) throw new Error(data.error || ('请求失败 ' + res.status));
+  /* 服务端下发需要特殊显示的账号名(保留开发者账号), 客户端不再硬编码最高权限账号名(渗透#3) */
+  if (path === '/api/me' && data && Array.isArray(data.hideNames) && data.hideNames.length) ADMIN_NAME = data.hideNames[0];
   return data;
 }
 function saveAuth(token, user){
@@ -667,12 +669,11 @@ function addScore(name, d){
     if (AUTH.user){ AUTH.user.score = r.score; if (USER_CACHE[AUTH.user.username]) USER_CACHE[AUTH.user.username].score = r.score; }
     if (curScreen === 'screen-lobby' && getSession() === name){ $('lob-score').textContent = r.score; refreshRankBadge(); }
   }).catch(e=>{
-    const m = (e && e.message) || '';
-    if(m.indexOf('行为异常')>=0) toast('⚠ ' + m, false);
-    else if(m.indexOf('频繁')>=0){   // 被限流: 明确提示这分没记上, 避免本地乐观加分与服务器静默不一致
-      toast('⚠ ' + m, false);
-      api('/api/me', { skipAuth:true }).then(function(dd){ if(dd && dd.user && AUTH.user){ AUTH.user.score = dd.user.score; if(USER_CACHE[dd.user.username]) USER_CACHE[dd.user.username].score = dd.user.score; if(curScreen==='screen-lobby' && $('lob-score')) $('lob-score').textContent = dd.user.score; } }).catch(function(){});
-    }
+    /* 任何失败(反作弊 403 / 限流 429 / 数据异常 400 / 服务 5xx)都要提示并回刷服务器真实分数,
+       不再静默丢分 —— 本地乐观加分与服务器不一致会导致玩家看到分数"又跳回去"(评审A) */
+    const m = (e && e.message) || '得分上报失败';
+    toast('⚠ ' + m, false);
+    api('/api/me', { skipAuth:true }).then(function(dd){ if(dd && dd.user && AUTH.user){ AUTH.user.score = dd.user.score; if(USER_CACHE[dd.user.username]) USER_CACHE[dd.user.username].score = dd.user.score; if(curScreen==='screen-lobby' && $('lob-score')) $('lob-score').textContent = dd.user.score; try{ refreshRankBadge(); }catch(e2){} } }).catch(function(){});
   });
 }
 function srvOnlineNames(){ return Array.from(ONLINE_SET); }
@@ -2597,7 +2598,7 @@ async function applySkinToSteve(steve, name){
   try{
     let data = SKIN_CACHE[name];
     if(data === undefined){
-      const r = await fetch('/api/skin/get?name=' + encodeURIComponent(name));
+      const r = await fetch('/api/skin/get?name=' + encodeURIComponent(name), { headers: { 'X-User-Token': (AUTH.token||'') } });   // 接口已要求登录(渗透#7)
       const d = await r.json();
       data = d.skin || null;
       if(data) SKIN_CACHE[name] = data;   // 只缓存有皮肤的 null 不缓存
@@ -2629,7 +2630,7 @@ async function applySkinToArm(){
     if(!me) return;
     let data = SKIN_CACHE[me];
     if(data === undefined){
-      const r = await fetch('/api/skin/get?name=' + encodeURIComponent(me));
+      const r = await fetch('/api/skin/get?name=' + encodeURIComponent(me), { headers: { 'X-User-Token': (AUTH.token||'') } });   // 接口已要求登录(渗透#7)
       const d = await r.json();
       data = d.skin || null;
       if(data) SKIN_CACHE[me] = data;
@@ -2660,7 +2661,7 @@ function openSkinModal(){
   $('skin-status').textContent = '';
   try{
     const me = getSession();
-    fetch('/api/skin/get?name=' + encodeURIComponent(me)).then(r => r.json()).then(d => {
+    fetch('/api/skin/get?name=' + encodeURIComponent(me), { headers: { 'X-User-Token': (AUTH.token||'') } }).then(r => r.json()).then(d => {
       if(d.skin){
         const ctx = $('skin-preview').getContext('2d');
         const img = new Image();
