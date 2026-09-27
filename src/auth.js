@@ -1,6 +1,5 @@
 /* 共享: 存储 + token 鉴权 (Worker 与 Durable Object 共用) */
 const ADMIN_NAME = '为啥全部姓名都在';
-const ADMIN_DEFAULT_PASS = 'abc198992';
 const TOKEN_TTL = 30 * 24 * 3600 * 1000;
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -46,13 +45,17 @@ async function putDb(env, d) {
   return true;
 }
 async function getSecret(env) {
-  /* 确定性密钥: 由 SECRET_PEPPER 推导, Worker 与 DO 各自本地计算, 永远一致(不再经 KV 分发) */
-  return await sha1Hex((env.SECRET_PEPPER || 'bow-fallback-v2') + '|bow-master|v1') + sha256Hex((env.SECRET_PEPPER || 'bow-fallback-v2') + '|bow-master|v1');
+  /* 确定性密钥: 由 SECRET_PEPPER 推导, Worker 与 DO 各自本地计算, 永远一致(不再经 KV 分发)。
+     ⚠ 两个 await 都不能少: 少了那个会变成 sha1(...) + "[object Promise]" —— 密钥后半段
+       实际是个常量字符串, 且两处写法一旦被改就会让线上令牌全体失效 */
+  const m = (env.SECRET_PEPPER || 'bow-fallback-v2') + '|bow-master|v1';
+  return (await sha1Hex(m)) + (await sha256Hex(m));
 }
-async function issueToken(env, name) {
+async function issueToken(env, name, tv) {
   const sec = await getSecret(env);
   const userId = await nameToId(name);
-  const payload = b64u(enc.encode(JSON.stringify({ userId, name, exp: Date.now() + TOKEN_TTL })));
+  /* v = 账号令牌版本: 登出/改密时账号上的 tv +1, 旧令牌立即全部失效(渗透#6) */
+  const payload = b64u(enc.encode(JSON.stringify({ userId, name, exp: Date.now() + TOKEN_TTL, v: (tv | 0) })));
   return payload + '.' + await hmacSign(sec, payload);
 }
 async function userFromToken(env, token) {
@@ -70,6 +73,7 @@ async function userFromToken(env, token) {
     const rec = await readUser(env, p.name);
     if (!rec) return null;
     if (rec.banned) return null;
+    if ((p.v | 0) !== (rec.tv | 0)) return null;   // 版本不匹配 = 该令牌已被吊销(登出/改密)
     return { name: p.name, ...rec };
   } catch (e) { return null; }
 }
@@ -178,7 +182,7 @@ function pubUser(u) {
 }
 
 export {
-  ADMIN_NAME, ADMIN_DEFAULT_PASS, TOKEN_TTL,
+  ADMIN_NAME, TOKEN_TTL,
   b64u, hex, hashPass, getDb, putDb, getSecret, hmacSign,
   issueToken, userFromToken, pubUser, nameToId, readUser, writeUser, delUser, flushDirty, dsGet, dsPut, dsPatch,
 };

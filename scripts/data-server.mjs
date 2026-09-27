@@ -120,9 +120,10 @@ const server = http.createServer((req, res) => {
       let rec = {};
       try { rec = JSON.parse(fs.readFileSync(f, 'utf8') || '{}'); } catch (e) {}
       if (!fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '账号不存在', score: 0 })); return; }
-      const dRaw = Number(a.delta), d = dRaw | 0;
+      /* 必须是数字型整数: 字符串"17"、true、17.5 一律拒(评审G) */
+      const dRaw = a.delta, d = typeof dRaw === 'number' ? dRaw | 0 : NaN;
       /* 合法上限 17 = 靶心10 + 连击加成5 + 爆裂2(原15会误伤满加成命中); 先判整数再|0, 防 20.9 被截断放行 */
-      if (!Number.isFinite(dRaw) || dRaw !== d || d < 1 || d > 17) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '数据异常', score: rec.score|0 })); return; }
+      if (typeof dRaw !== 'number' || !Number.isFinite(dRaw) || dRaw !== d || d < 1 || d > 17) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: 0, error: '数据异常', score: rec.score|0 })); return; }
       const T1 = { x: -2.0, z: -22 }, T2 = { x: 2.0, z: -22 };
       const px = Number(a.x), pz = Number(a.z);
       if (Number.isFinite(px) && Number.isFinite(pz)) {
@@ -248,22 +249,24 @@ const server = http.createServer((req, res) => {
       const delta = isZero ? 0 : Math.max(-500, Math.min(500, a.delta|0));
       let files = [];
       try { files = fs.readdirSync(DATA_DIR); } catch (e) {}
-      let changed = 0, skippedDev = 0, total = 0;
+      let changed = 0, skippedDev = 0, total = 0, failed = 0;
       for (const f of files) {
         if (!f.startsWith('u:') || !f.endsWith('.json')) continue;
         total++;
         const fp = path.join(DATA_DIR, f);
         let rec = {};
-        try { rec = JSON.parse(fs.readFileSync(fp, 'utf8') || '{}'); } catch (e) { continue; }
+        try { rec = JSON.parse(fs.readFileSync(fp, 'utf8') || '{}'); } catch (e) { failed++; continue; }
         if (rec.isDeveloper) { skippedDev++; continue; }   // 开发者账号永不参与批量改分
         const old = rec.score|0;
         const ns = isZero ? 0 : Math.max(0, old + delta);
         if (ns === old) continue;                          // 没变化不写盘(清零时跳过本来就是0分的)
         rec.score = ns;
-        try { fs.writeFileSync(fp, JSON.stringify(rec)); changed++; } catch (e) {}
+        /* 先写 .tmp 再 rename: 进程崩在半路也不会留下截断的账号 JSON(与通用 PUT 同策略, 评审D) */
+        try { fs.writeFileSync(fp + '.tmp', JSON.stringify(rec)); fs.renameSync(fp + '.tmp', fp); changed++; }
+        catch (e) { failed++; try { fs.unlinkSync(fp + '.tmp'); } catch (e2) {} }
       }
       res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-      res.end(JSON.stringify({ ok: 1, changed: changed, skippedDev: skippedDev, total: total }));
+      res.end(JSON.stringify({ ok: 1, changed: changed, skippedDev: skippedDev, total: total, failed: failed }));
     });
     return;
   }
@@ -307,6 +310,10 @@ const server = http.createServer((req, res) => {
     req.on('data', (c) => { body += c; if (body.length > 100000) req.destroy(); });
     req.on('end', () => {
       fs.readFile(file, 'utf8', (err, old) => {
+        /* 文件不存在一律 404: PATCH 语义是"改已有记录", 否则会凭空写出只有 {tv} 的残缺文件,
+           遮蔽 KV 里的老账号 → 该账号数据被读成空壳, 任何密码都能认领(二审建议⑦) */
+        if (err && err.code === 'ENOENT') { res.writeHead(404); res.end('not found'); return; }
+        if (err) { res.writeHead(500); res.end('err'); return; }
         let obj = {};
         try { obj = JSON.parse(old || '{}'); } catch (e) { obj = {}; }
         let patch = {};
