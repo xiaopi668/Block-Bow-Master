@@ -51,6 +51,23 @@ input{user-select:text;-webkit-user-select:text}
 .note{font-size:12px;color:#9a9a9a;text-shadow:1px 1px 0 #000;line-height:1.7;text-align:center}
 .divider{width:100%;height:2px;background:linear-gradient(90deg,transparent,#666,transparent);margin:4px 0}
 
+/* ---------- 页脚友情链接(开发者后台维护) ---------- */
+.flinks-bar{position:absolute;left:0;right:0;bottom:26px;z-index:3;padding:0 14px;
+  font-size:11px;color:#9a8f7d;text-shadow:1px 1px 0 #000;line-height:1.9;word-break:break-all;display:none}
+.flinks-bar.on{display:block}
+.flinks-label{color:#6f6656}
+.flinks-bar a{color:#c9b48a;text-decoration:none;margin:0 7px;border-bottom:1px dotted #7a6f5c}
+.flinks-bar a:hover{color:#ffd83d;border-bottom-color:#ffd83d}
+#flinks-admin-list{width:100%;text-align:left;font-size:12px;background:rgba(0,0,0,.45);
+  border:2px solid #000;padding:6px;max-height:150px;overflow-y:auto}
+#flinks-admin-list .fl-row{display:flex;align-items:center;gap:8px;padding:4px 2px;justify-content:space-between}
+#flinks-admin-list .fl-row a{color:#9bc8ff;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#flinks-admin-list .fl-row a:hover{color:#7ee37e}
+#flinks-admin-list .fl-empty{color:#888;padding:4px 2px}
+.fl-del{cursor:pointer;background:#7a2a2a;border:2px solid #000;color:#fff;font-size:11px;
+  padding:2px 9px;font-family:inherit;box-shadow:inset 1px 1px 0 rgba(255,255,255,.25)}
+.fl-del:hover{background:#a33}
+
 /* toast */
 #toast{position:fixed;top:26px;left:50%;transform:translateX(-50%);z-index:999;
   background:rgba(20,18,16,.95);border:2px solid #000;box-shadow:inset 1px 1px 0 rgba(255,255,255,.2);
@@ -219,6 +236,7 @@ kbd{background:#222;border:1px solid #666;border-bottom-width:3px;border-radius:
     <div data-page-node-id="eWlYuZneJuUU1UeDRPCkBs" class="note"><!--pnid:PACJGbuFVWbs3Z5GMQ5Tmc-->玩家被固定在原地，只有手脚能动 ——<br data-page-node-id="BYVKweNigghney32DcnG08"><!--pnid:L1DjEU44z7AlkXhFedzTRc-->轻点快射、按住蓄力，射中标靶！</div>
   
   </div>
+  <div class="flinks-bar"><span class="flinks-label">友情链接：</span><span class="flinks-list"></span></div>
 </div>
 
 <!--pnid:5HHUBnjm7BOaBNb6UyzOcs--><!-- ================= 注册 ================= -->
@@ -232,6 +250,7 @@ kbd{background:#222;border:1px solid #666;border-bottom-width:3px;border-radius:
     <button data-page-node-id="B9xDCSjXOqO9f8dO1LkmLw" class="mc-btn small" id="btn-back-login"><!--pnid:yAVvXZ2ZD5mCKb8WLCIpyP-->返回登录</button>
     <div class="note" style="margin-top:10px; color:#c9b48a; font-size:11px; line-height:1.6">© 2026 xiaopi668 · 保留所有权利 / All Rights Reserved<br>注册即视为同意：本游戏及其全部素材、代码版权归作者所有，未经授权不得复制、传播或商用</div>
   </div>
+  <div class="flinks-bar"><span class="flinks-label">友情链接：</span><span class="flinks-list"></span></div>
 </div>
 
 <!--pnid:Iqzk5siZjwgPozMIlGeQ8T--><!-- ================= 大厅 ================= -->
@@ -261,6 +280,7 @@ kbd{background:#222;border:1px solid #666;border-bottom-width:3px;border-radius:
     <button data-page-node-id="w92NPvcCCIiTiPmoERvyS9" class="mc-btn small" id="btn-friends"><!--pnid:qlguxhxNfLZ5NDprFb96nt-->好 友（<span data-page-node-id="GLYaUuowOWd5OESypbWMre" id="friend-cnt"><!--pnid:PB5vK3fZLZeyzgcmmwqRyz-->0</span><!--pnid:xXnIA0t7UjRjYSGHGmuEyK-->/200）</button>
     <button data-page-node-id="TjaveAqCuCZxCinNWcgBrs" class="mc-btn small danger" id="btn-logout"><!--pnid:Uk7UMmz5IntKvuNZZLCdWC-->退出登录</button>
   </div>
+  <div class="flinks-bar"><span class="flinks-label">友情链接：</span><span class="flinks-list"></span></div>
 </div>
 
 <!--pnid:H1sCdcJ99fa66WiBy2KM5y--><!-- ================= 管理员 ================= -->
@@ -273,6 +293,13 @@ kbd{background:#222;border:1px solid #666;border-bottom-width:3px;border-radius:
     <div data-page-node-id="8IH0HbyZrqN4IeV3UxRnEg" class="row" id="appoint-row" style="width:100%; justify-content:flex-start">
       <input data-page-node-id="YdZs4K4JQD50P100h0zGzG" autocomplete="off" class="mc-input" id="appoint-name" maxlength="16" placeholder="输入玩家名称" style="flex:1; min-width:140px">
       <button data-page-node-id="PF83lBrL22sMtILNhMlpJg" class="mc-btn small green" id="btn-appoint" style="min-width:110px"><!--pnid:0Z4thrYZHD2fyvkTk7q1vP-->设为管理员</button>
+    </div>
+    <div class="row" id="flinks-row" style="display:none; width:100%; justify-content:flex-start">
+      <div class="note" style="width:100%; text-align:left; color:#9bc8ff">🔗 友情链接（仅开发者可增删，显示在页面底部，最多 30 条）</div>
+      <div id="flinks-admin-list"></div>
+      <input autocomplete="off" class="mc-input" id="flink-name" maxlength="24" placeholder="站点名称" style="flex:1; min-width:120px; width:auto">
+      <input autocomplete="off" class="mc-input" id="flink-url" maxlength="300" placeholder="https://example.com" style="flex:2; min-width:180px; width:auto">
+      <button class="mc-btn small green" id="btn-flink-add" style="min-width:90px">添 加</button>
     </div>
     <div data-page-node-id="d78sQAmzauNV5lCLKyBLLD" class="row" style="width:100%; justify-content:flex-start">
       <button data-page-node-id="stV7RniJC4ZgxGHYg136zn" class="mc-btn small" id="btn-all-add" style="min-width:110px"><!--pnid:ViXJbHjBDA3dAJyDWRWIgd-->所有人 +10分</button>
@@ -937,6 +964,8 @@ async function openAdmin(){
   clearInterval(adminTimer);
   if(!canManage()){ show('screen-lobby'); return; }
   $('appoint-row').style.display = isSuper() ? 'flex' : 'none';
+  $('flinks-row').style.display = isSuper() ? 'flex' : 'none';   // 友情链接管理仅开发者可见
+  if(isSuper()) loadFlinks(true);
   renderAdmin();
   show('screen-admin');
   adminTimer = setInterval(()=>{
@@ -966,6 +995,81 @@ $('admin-list').addEventListener('click', e=>{
 $('btn-admin').onclick = ()=>{ openAdmin(); sfx('ui'); };
 $('btn-admin-back').onclick = ()=>{ clearInterval(adminTimer); show('screen-lobby'); sfx('ui'); };
 $('btn-admin-refresh').onclick = ()=>{ renderAdmin(); sfx('ui'); };
+
+/* ---------- 友情链接(页脚展示 + 开发者后台维护) ---------- */
+let FLINKS = [];
+function renderFlinks(){
+  document.querySelectorAll('.flinks-bar').forEach(bar=>{
+    const box = bar.querySelector('.flinks-list');
+    if(!box) return;
+    box.innerHTML = '';
+    if(!FLINKS.length){ bar.classList.remove('on'); return; }   // 一条都没有就整条隐藏
+    FLINKS.forEach(l=>{
+      const a = document.createElement('a');
+      a.href = l.url; a.textContent = l.name;                   // 纯文本渲染, 不拼 HTML(防注入)
+      a.target = '_blank'; a.rel = 'noopener noreferrer nofollow';
+      box.appendChild(a);
+    });
+    bar.classList.add('on');
+  });
+  renderFlinkAdmin();
+}
+function renderFlinkAdmin(){
+  const box = document.getElementById('flinks-admin-list');
+  if(!box) return;
+  box.innerHTML = '';
+  if(!FLINKS.length){
+    box.innerHTML = '<div class="fl-empty">还没有友情链接 —— 填好名称和网址后点「添加」</div>';
+    return;
+  }
+  FLINKS.forEach(l=>{
+    const row = document.createElement('div'); row.className = 'fl-row';
+    const a = document.createElement('a');
+    a.href = l.url; a.textContent = l.name; a.target = '_blank'; a.rel = 'noopener noreferrer nofollow'; a.title = l.url;
+    const u = document.createElement('span');
+    u.style.cssText = 'color:#777;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1';
+    u.textContent = l.url;
+    const b = document.createElement('button'); b.className = 'fl-del'; b.textContent = '删除'; b.dataset.n = l.name;
+    row.appendChild(a); row.appendChild(u); row.appendChild(b);
+    box.appendChild(row);
+  });
+}
+/* 纵深防御: 服务端已把过关的链接再筛一次, 只放行 http/https(万一 KV 里被塞了 javascript: 也不执行) */
+function normFlinks(a){
+  return Array.isArray(a) ? a.filter(l=> l && typeof l.name==='string' && typeof l.url==='string' && /^https?:\/\//i.test(l.url)) : [];
+}
+async function loadFlinks(silent){
+  try{
+    const d = await (await fetch('/api/friendlinks')).json();
+    FLINKS = normFlinks(d.links);
+  }catch(e){ if(silent) return; }   // 静默刷新失败时保留上一次的内容
+  renderFlinks();
+}
+async function flinkOp(body, okMsg){
+  try{
+    const d = await api('/api/admin/friendlinks', { method:'POST', body });
+    FLINKS = normFlinks(d.links);
+    renderFlinks();
+    if(okMsg) toast(okMsg, true);
+    return true;
+  }catch(e){ toast('操作失败：' + e.message, false); return false; }
+}
+$('btn-flink-add').onclick = ()=>{
+  const name = $('flink-name').value.trim();
+  const url = $('flink-url').value.trim();
+  if(!name) return toast('先填写站点名称', false);
+  if(!url) return toast('先填写链接网址', false);
+  sfx('ui');
+  flinkOp({ op:'add', name:name, url:url }, '已添加友情链接').then(ok=>{
+    if(ok){ $('flink-name').value = ''; $('flink-url').value = ''; }
+  });
+};
+$('flinks-admin-list').addEventListener('click', e=>{
+  const b = e.target.closest('.fl-del'); if(!b) return;
+  sfx('ui');
+  askConfirm('确定删除友情链接「' + b.dataset.n + '」？', ()=>{ flinkOp({ op:'del', name:b.dataset.n }, '已删除'); });
+});
+loadFlinks();
 
 /* ---------- 任命管理员 / 批量操作 ---------- */
 $('btn-appoint').onclick = ()=>{
@@ -3436,6 +3540,7 @@ enterLobby = function(){
   _origEnterLobby.apply(this, arguments);
   try{ updateFriendCount(); renderAdminIfOn(); }catch(e){}
   try{ fbLoad(); connectFriendWs(); }catch(e){}
+  try{ loadFlinks(true); }catch(e){}   // 进大厅顺手刷新页脚友情链接(开发者刚加的能立刻看到)
 };
 function renderAdminIfOn(){ if(curScreen==='screen-admin') renderAdmin(); }
 })();

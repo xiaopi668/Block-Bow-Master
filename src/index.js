@@ -98,6 +98,43 @@ function intCount(v, def, min, max) {
   if (v === undefined || v === null || v === '') v = def;
   return (typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max) ? v : null;
 }
+/* ===== 友情链接(页脚展示, 开发者后台增删) =====
+   存 KV 单键 flinks: 改动只发生在开发者点"添加/删除"时, 写入次数可忽略;
+   公开 GET 只返回 name/url 两个字段, 其余一概不下发 */
+const FLINK_KEY = 'flinks';
+const FLINK_MAX = 30;
+async function getFlinks(env) {
+  try {
+    const s = await env.BOW_KV.get(FLINK_KEY);
+    if (s) {
+      const a = JSON.parse(s);
+      if (Array.isArray(a)) return a.filter(function (x) { return x && typeof x.name === 'string' && typeof x.url === 'string'; });
+    }
+  } catch (e) {}
+  return [];
+}
+async function putFlinks(env, arr) {
+  try { await env.BOW_KV.put(FLINK_KEY, JSON.stringify(arr)); return true; } catch (e) { return false; }
+}
+/* 名称: 去控制符/空白, 限 1..24 字, 禁 <>(前端一律按纯文本渲染, 服务端仍挡一道) */
+function flinkName(raw) {
+  var s = '';
+  const src = String(raw || '');
+  for (let i = 0; i < src.length; i++) { const c = src.charCodeAt(i); if (c >= 32 && c !== 127) s += src[i]; }   // 去控制符
+  s = s.trim().slice(0, 24);
+  if (!s || /[<>]/.test(s)) return null;
+  return s;
+}
+/* 链接: 只收 http/https(挡 javascript: 等伪协议), 无协议头自动补 https:// */
+function flinkUrl(raw) {
+  let s = String(raw || '').trim().slice(0, 300);
+  if (!s) return null;
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(s)) s = 'https://' + s;
+  let u; try { u = new URL(s); } catch (e) { return null; }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+  if (!u.hostname) return null;
+  return u.href;
+}
 /* ===== 成就服务端白名单与达成条件(渗透#2) =====
    原本客户端报什么 id 就解锁什么: 可一次拿到全部成就, 还能写入任意伪造 id */
 const ACH_IDS = ['first-hit', 'combo-5', 'combo-10', 'perfect-round', 'round-100', 'round-300', 'round-500',
@@ -241,6 +278,11 @@ async function apiBody(request, env, url) {
     }
     if (path === '/api/config' && request.method === 'GET') {
       return json({ config: { maxScore: 999999, server: 'bow-v5-cf' } });
+    }
+    if (path === '/api/friendlinks' && request.method === 'GET') {
+      /* 页脚友情链接(公开只读): 开发者在后台维护, 这里只下发 name/url */
+      if (!rateLimit('flg:' + ip, 120, 60000)) return json({ error: '请求过于频繁，请稍后再试' }, 429);
+      return json({ links: await getFlinks(env) });
     }
 
     /* ---- 认证 ---- */
@@ -576,6 +618,35 @@ async function apiBody(request, env, url) {
       const isDev = function(u){ return u && u.isDeveloper; };
       var canTouch = function(u){ return u && (me.name === ADMIN_NAME || (!isDev(u) && (!u.isAdmin || me.isDeveloper))); };
       var meIsDev = !!me.isDeveloper;
+
+      /* 友情链接管理(仅开发者): 增删页脚外链; 普通管理员只能看不能改 */
+      if (path === '/api/admin/friendlinks' && request.method === 'POST') {
+        if (!meIsDev) return json({ error: '需要开发者权限' }, 403);
+        if (!rateLimit('fla:' + ip, 60, 60000)) return json({ error: '操作太频繁，请稍后再试' }, 429);
+        const op = String(body.op || '');
+        const links = await getFlinks(env);
+        if (op === 'add') {
+          if (links.length >= FLINK_MAX) return json({ error: '友情链接最多 ' + FLINK_MAX + ' 条' }, 400);
+          const name = flinkName(body.name);
+          if (!name) return json({ error: '名称需 1-24 字，且不能包含 <>' }, 400);
+          const url = flinkUrl(body.url);
+          if (!url) return json({ error: '链接必须是 http/https 网址' }, 400);
+          if (links.some(function (x) { return x.name === name; })) return json({ error: '已存在同名友情链接' }, 400);
+          if (links.some(function (x) { return x.url === url; })) return json({ error: '这个链接已经添加过了' }, 400);
+          links.push({ name: name, url: url });
+          if (!(await putFlinks(env, links))) return json({ error: '保存失败，请稍后再试' }, 502);
+          return json({ ok: true, links: links });
+        }
+        if (op === 'del') {
+          const dname = flinkName(body.name);
+          const idx = dname ? links.findIndex(function (x) { return x.name === dname; }) : -1;
+          if (idx < 0) return json({ error: '没有这条友情链接' }, 400);
+          links.splice(idx, 1);
+          if (!(await putFlinks(env, links))) return json({ error: '保存失败，请稍后再试' }, 502);
+          return json({ ok: true, links: links });
+        }
+        return json({ error: '未知操作' }, 400);
+      }
 
       /* 救援迁移: 只读导出 DO state.storage 里的旧账号库 */
       if (path === '/api/admin/do-db' && request.method === 'GET') {
