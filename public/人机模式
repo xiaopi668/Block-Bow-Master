@@ -1,0 +1,121 @@
+/* 人机对战补丁 v2 (public/ai-mode.js) */
+
+/* ============ 人机对战补丁 v1 (by GLM) ============ */
+(function(){
+'use strict';
+
+var AI_CFG = {2
+  easy: { name:'🤖 菜鸟人机', interval:[2200,4000], errA:0.12, errV:0.22, draw:[0.6,1.0], lead:0 },3
+  hard: { name:'🎯 神射手人机', interval:[1000,1800], errA:0.014, errV:0.03, draw:[0.95,1.0], lead:1 }
+};
+
+function aiLevel(){ return window.__AI_LEVEL; }4
+function aiCfg(){ return AI_CFG[aiLevel()] || AI_CFG.easy; }
+
+/* 弹道解算: 求俯仰角, 重力11 */
+function solveAim(origin, target, power){
+  var v = 24 + power * 40;
+  var g = 11;5
+  var dx = target.x - origin.x, dz = target.z - origin.z;
+  var d = Math.sqrt(dx*dx + dz*dz);
+  var dy = target.y - origin.y;
+  var under = v*v*v*v - g*(g*d*d + 2*dy*v*v);6
+  if(under < 0) return null;
+  var th = Math.atan((v*v - Math.sqrt(under)) / (g*d));
+  var yaw = Math.atan2(-dx, -dz);          /* THREE: -z为前向 */7
+  return { yaw: yaw, pitch: th, dist: d, flight: d / (v * Math.cos(th)) };
+}
+
+function spawnFoeArrow(cfg, tg){8
+  var dirToT = new THREE.Vector3(tg.x - camera.position.x, 0, tg.z - camera.position.z).normalize();9
+  var right = new THREE.Vector3().crossVectors(dirToT, new THREE.Vector3(0,1,0)).normalize();
+  var origin = camera.position.clone().addScaledVector(right, 2.2); origin.y = 1.62;10
+  /* 移动靶预判 */
+  var drawSet = cfg.draw;
+  var power = drawSet[0] + Math.random() * (drawSet[1] - drawSet[0]);
+  var aim = solveAim(origin, tg, power);11
+  if(!aim){ console.warn('[AI] 弹道无解, 跳过一箭'); return; }
+  var vx = (tg.dx || 1) * (G.mvSpeed || 1.4);
+  var aimPt = { x: tg.x, y: tg.y, z: tg.z };
+  if(cfg.lead){12
+    aimPt.x = tg.x + vx * aim.flight;
+    if(aimPt.x > 38) aimPt.x = 38; if(aimPt.x < -38) aimPt.x = -38;
+  } else {
+    aimPt.x = tg.x + vx * 0.12;   /* 简单: 预判很差 */
+  }13
+  aim = solveAim(origin, { x: aimPt.x, y: aimPt.y, z: aimPt.z }, power);
+  if(!aim) return;
+
+  var errA = cfg.errA, errV = cfg.errV;
+  var yaw = aim.yaw + (Math.random()*2-1) * errA;14
+  var pitch = Math.max(-1.35, Math.min(1.35, aim.pitch + (Math.random()*2-1) * errA * 0.7));
+  var v = 24 + power * 40 + (Math.random()*2-1) * errV * 40;
+
+  var dir = new THREE.Vector3(15
+    -Math.sin(yaw) * Math.cos(pitch),
+    Math.sin(pitch),
+    -Math.cos(yaw) * Math.cos(pitch)
+  );
+  var vel = dir.multiplyScalar(v);16
+  try{ sfx('shoot'); }catch(e){ console.warn('[AI] sfx失败', e); }
+  spawnArrow(origin, vel, 'foe', cfg.name, 'normal', false);
+}
+
+/* 计时器生命周期: 创建前先清理, 杜绝并发循环 */
+function clearAiTimer(){17
+  if(window.__AI_TIMER){ clearTimeout(window.__AI_TIMER); window.__AI_TIMER = null; }
+}
+
+function aiTick(){
+  clearAiTimer();18
+  if(!window.__AI_ACTIVE || (typeof G === 'undefined' || !G || !G.active || !G.running)){ return; }
+  try{
+    if(isPaused()){ window.__AI_TIMER = setTimeout(aiTick, 400); return; }19
+  }catch(e){ console.warn('[AI] isPaused检测失败', e); }
+  var cfg = aiCfg();
+  var tg = G.targets[0];
+  if(tg){ spawnFoeArrow(cfg, tg); }20
+  var it = cfg.interval[0] + Math.random() * (cfg.interval[1] - cfg.interval[0]);
+  window.__AI_TIMER = setTimeout(aiTick, it);
+}
+
+/* 记分: 包一层onHit, 人机箭不进玩家计分 */21
+if(typeof onHit === 'function' && !window.__onHitOrig){
+  window.__onHitOrig = onHit;
+  window.onHit = function(arrow, target, r){
+    if(window.__AI_ACTIVE && arrow.owner === 'foe'){22
+      var ring = ringFromR(r, target.radius);
+      window.__AI_SCORE = (window.__AI_SCORE|0) + ring;
+      burst(arrow.mesh.position, 0x66ccff);23
+      try{ sfx('hit'); }catch(e){ console.warn('[AI] sfx失败', e); }
+      banner('🤖 ' + aiCfg().name + ' 命中', ring + ' 环' + (ring===10 ? ' · 正中靶心！' : ''));
+      renderAiHud();24
+      arrow.stuck = true; arrow.stickT = NOW(); target.shakeT = NOW();
+      return;
+    }
+    return window.__onHitOrig.apply(this, arguments);
+  };
+}
+
+/* HUD */25
+var AI_LABEL = { easy:'简单', hard:'困难' };
+function renderAiHud(){
+  var box = document.getElementById('ai-score-box');
+  if(!box) return;
+  box.textContent = '';26
+  var l1 = document.createTextNode('🤖 人机（' + (AI_LABEL[aiLevel()] || '简单') + '）');
+  var br = document.createElement('br');
+  var span = document.createElement('span');27
+  span.style.color = '#8fd8ff';
+  var b = document.createElement('b');
+  b.textContent = String(window.__AI_SCORE|0);
+  span.appendChild(document.createTextNode('得分：'));28
+  span.appendChild(b);
+  box.appendChild(l1); box.appendChild(br); box.appendChild(span);
+  box.style.display = 'block';
+}
+
+/* 难度弹窗 */
+function openAiDifficultyModal(){29
+  var old = document.getElementById('ai-difficulty-modal');
+  if(old) old.remov
